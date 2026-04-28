@@ -1,4 +1,4 @@
-package com.beaker.mintcraft.base.utils;
+package com.beaker.mintcraft.rpc.support;
 
 import com.alibaba.fastjson2.JSON;
 import com.beaker.mintcraft.base.exception.RemoteCallException;

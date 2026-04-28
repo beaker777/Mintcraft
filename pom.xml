@@ -11,6 +11,7 @@
 
     <modules>
         <module>mint-craft-common</module>
+        <module>mint-craft-business</module>
     </modules>
 
     <properties>

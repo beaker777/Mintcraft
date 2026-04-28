@@ -1,0 +1,9 @@
+# 这里是项目中所有需要配置地址的汇总, 需要修改哪个中间件的地址在此处修改即可.
+mintcraft:
+  mysql:
+    # MySQL 的地址 + 数据库配置
+    url: jdbc:mysql://127.0.0.1:13306/mintcraft
+    # MySQL 的用户名
+    username: root
+    # MySQL 的密码
+    password: MC123456

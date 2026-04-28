@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.beaker</groupId>
-        <artifactId>mint-craft-common</artifactId>
+        <artifactId>mint-craft-business</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
     <groupId>com.beaker</groupId>
-    <artifactId>mint-craft-rpc</artifactId>
-    <description>rpc 组件</description>
+    <artifactId>mint-craft-user</artifactId>
+    <description>用户模块</description>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -23,21 +23,35 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.beaker</groupId>
             <artifactId>mint-craft-base</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!--   dubbo   -->
         <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo-spring-boot-starter</artifactId>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-datasource</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo-registry-nacos</artifactId>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-web</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
+
+
 
     </dependencies>
 

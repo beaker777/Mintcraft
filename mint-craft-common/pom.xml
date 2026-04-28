@@ -9,13 +9,17 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
+    <groupId>com.beaker</groupId>
     <artifactId>mint-craft-common</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>mint-craft-base</module>
         <module>mint-craft-web</module>
         <module>mint-craft-rpc</module>
+        <module>mint-craft-datasource</module>
+        <module>mint-craft-api</module>
     </modules>
 
     <properties>
