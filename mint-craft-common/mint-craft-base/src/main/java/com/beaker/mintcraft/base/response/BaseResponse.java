@@ -1,7 +1,6 @@
 package com.beaker.mintcraft.base.response;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -11,8 +10,7 @@ import java.io.Serializable;
  * @Date 2026/4/26 20:56
  * @Description 通用出参
  */
-@Getter
-@Setter
+@Data
 @ToString
 public class BaseResponse implements Serializable {
 

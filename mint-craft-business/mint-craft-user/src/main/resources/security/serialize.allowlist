@@ -1,0 +1,3 @@
+com.beaker.mintcraft.api.user.request.condition.impl.UserPhoneQueryCondition
+com.beaker.mintcraft.api.user.request.condition.impl.UserPhoneAndPasswordQueryCondition
+com.beaker.mintcraft.api.user.request.condition.impl.UserIdQueryCondition

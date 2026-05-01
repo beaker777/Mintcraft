@@ -20,6 +20,8 @@
         <module>mint-craft-rpc</module>
         <module>mint-craft-datasource</module>
         <module>mint-craft-api</module>
+        <module>mint-craft-sa-token</module>
+        <module>mint-craft-cache</module>
     </modules>
 
     <properties>

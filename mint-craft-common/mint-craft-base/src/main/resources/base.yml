@@ -7,3 +7,20 @@ mintcraft:
     username: root
     # MySQL 的密码
     password: MC123456
+  redis:
+    # Redis 的地址
+    url: 127.0.0.1
+    # Redis 的端口号
+    port: 16379
+    # Redis 的密码
+    password: 'MC123456'
+  nacos:
+    server:
+      # Nacos 的地址+端口号
+      url: 127.0.0.1:8848
+  dubbo:
+    nacos:
+      # nacos 上的给 dubbo 用的 namespace
+      namespace: dubbo_server
+      # nacos 上的给 dubbo 用的 group
+      group: dubbo

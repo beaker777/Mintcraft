@@ -34,7 +34,7 @@ public class FacadeAspect {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FacadeAspect.class);
 
-    @Around("@annotation(com.beaker.mintcraft.rpc.facade.Facade)")
+    @Around("@annotation(com.beaker.mintcraft.rpc.service.Facade)")
     public Object facade(ProceedingJoinPoint pjp) throws Exception {
         StopWatch stopWatch = new StopWatch();
 

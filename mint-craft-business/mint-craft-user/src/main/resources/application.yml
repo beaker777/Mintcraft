@@ -2,7 +2,13 @@ spring:
   application:
     name: mint-craft-user
   config:
-    import: optional:classpath:base.yml, optional:classpath:datasource.yml
+    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml
 
 server:
   port: 8083
+
+dubbo:
+  protocol:
+    port: 20089
+  application:
+    qos-port: 33333

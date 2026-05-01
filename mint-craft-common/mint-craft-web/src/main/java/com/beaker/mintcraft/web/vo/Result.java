@@ -1,7 +1,6 @@
 package com.beaker.mintcraft.web.vo;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import static com.beaker.mintcraft.base.response.ResponseCode.SUCCESS;
 
@@ -10,8 +9,7 @@ import static com.beaker.mintcraft.base.response.ResponseCode.SUCCESS;
  * @Date 2026/4/26 20:51
  * @Description 响应结果
  */
-@Getter
-@Setter
+@Data
 public class Result<T> {
 
     /**

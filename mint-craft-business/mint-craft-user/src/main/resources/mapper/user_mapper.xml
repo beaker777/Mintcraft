@@ -32,4 +32,21 @@
         </if>
     </select>
 
+    <select id="findByTelephone" resultMap="BaseResultMap">
+        select * from users where deleted = 0
+        <if test="telephone!=null">
+            and telephone = #{telephone}
+        </if>
+    </select>
+
+    <select id="findByTelephoneAndPasswordHash" resultMap="BaseResultMap">
+        select * from users where deleted=0
+        <if test="telephone!=null">
+            and telephone = #{telephone}
+        </if>
+        <if test="passwordHash!=null">
+            and password_hash = #{passwordHash}
+        </if>
+    </select>
+
 </mapper>

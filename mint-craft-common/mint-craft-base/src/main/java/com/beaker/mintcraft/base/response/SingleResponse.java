@@ -1,15 +1,13 @@
 package com.beaker.mintcraft.base.response;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 /**
  * @Author beaker
  * @Date 2026/4/26 21:00
  * @Description 返回单个数据的 Response
  */
-@Getter
-@Setter
+@Data
 public class SingleResponse<T> extends BaseResponse {
 
     public static final long serialVersionUID = 1L;

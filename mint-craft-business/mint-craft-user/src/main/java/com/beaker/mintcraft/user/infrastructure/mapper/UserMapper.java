@@ -19,4 +19,21 @@ public interface UserMapper extends BaseMapper<User> {
      * @return
      */
     User findById(Long id);
+
+    /**
+     * 根据用户电话号查询用户
+     *
+     * @param telephone
+     * @return
+     */
+    User findByTelephone(String telephone);
+
+    /**
+     * 根据电话号和密码查询用户
+     *
+     * @param telephone
+     * @param passwordHash
+     * @return
+     */
+    User findByTelephoneAndPasswordHash(String telephone, String passwordHash);
 }

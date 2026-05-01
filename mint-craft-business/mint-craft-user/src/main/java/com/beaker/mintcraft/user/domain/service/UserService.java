@@ -28,6 +28,28 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         return userMapper.findById(userId);
     }
 
+    /**
+     * 通过手机号查询用户信息
+     *
+     * @param telephone
+     * @return
+     */
+    public User findByTelephone(String telephone) {
+        return userMapper.findByTelephone(telephone);
+    }
+
+    /**
+     * 通过手机号和密码查询用户信息
+     *
+     * @param telephone
+     * @param password
+     * @return
+     */
+    public User findByTelephoneAndPassword(String telephone, String password) {
+        return userMapper.findByTelephoneAndPasswordHash(telephone, password);
+    }
+
+
     @Override
     public void afterPropertiesSet() throws Exception {
 

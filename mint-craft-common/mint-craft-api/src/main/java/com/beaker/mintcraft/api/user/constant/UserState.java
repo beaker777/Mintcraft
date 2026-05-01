@@ -1,4 +1,4 @@
-package com.beaker.mintcraft.api.constant;
+package com.beaker.mintcraft.api.user.constant;
 
 /**
  * @Author beaker

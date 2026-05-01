@@ -1,11 +1,10 @@
 package com.beaker.mintcraft.user.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.beaker.mintcraft.api.constant.UserRole;
-import com.beaker.mintcraft.api.constant.UserState;
+import com.beaker.mintcraft.api.user.constant.UserRole;
+import com.beaker.mintcraft.api.user.constant.UserState;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.util.Date;
 
@@ -14,8 +13,7 @@ import java.util.Date;
  * @Date 2026/4/27 21:40
  * @Description 用户类
  */
-@Getter
-@Setter
+@Data
 @TableName("users")
 public class User extends BaseEntity {
 

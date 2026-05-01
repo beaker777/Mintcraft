@@ -1,7 +1,6 @@
 package com.beaker.mintcraft.base.response;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.util.List;
 
@@ -10,8 +9,7 @@ import java.util.List;
  * @Date 2026/4/26 21:06
  * @Description 返回多个数据的 Response
  */
-@Getter
-@Setter
+@Data
 public class MultiResponse<T> extends BaseResponse {
 
     public static final long serialVersionUID = 1L;
