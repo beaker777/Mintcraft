@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: mint-craft-gateway
+  config:
+    import: optional:classpath:base.yml, optional:classpath:cache.yml
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_UNIQUE
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedHeaders: '*'
+            allowedMethods: '*'
+            allowedOrigins: '*'
+      routes:
+        - id: mintcraft-auth
+          uri: lb://mintcraft-auth
+          predicates:
+            - Path=/auth/**,/token/**
+        - id: mintcraft-business
+          uri: lb://mintcraft-business
+          predicates:
+            - Path=/trade/**,/order/**,/user/**,/collection/**,/wxPay/**,/box/**
+        - id: mintcraft-user
+          uri: lb://mintcraft-user
+          predicates:
+            - Path=/user/**
+#        - id: nfturbo-collection
+#          uri: lb://nfturbo-collection
+#          predicates:
+#            - Path=/collection/**
+#        - id: nfturbo-order
+#          uri: lb://nfturbo-order
+#          predicates:
+#            - Path=/order/**
+#        - id: nfturbo-trade
+#          uri: lb://nfturbo-trade
+#          predicates:
+#            - Path=/trade/**
+#        - id: nfturbo-pay
+#          uri: lb://nfturbo-pay
+#          predicates:
+#            - Path=/wxPay/**
+server:
+  port: 8081

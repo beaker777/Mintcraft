@@ -1,4 +1,4 @@
-package com.beaker.mintcraft.web;
+package com.beaker.mintcraft.web.config;
 
 import com.beaker.mintcraft.web.handler.GlobalWebExceptionHandler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
