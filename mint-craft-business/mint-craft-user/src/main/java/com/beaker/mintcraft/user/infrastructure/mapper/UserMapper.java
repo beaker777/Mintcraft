@@ -36,4 +36,20 @@ public interface UserMapper extends BaseMapper<User> {
      * @return
      */
     User findByTelephoneAndPasswordHash(String telephone, String passwordHash);
+
+    /**
+     * 根据用户名查询用户
+     *
+     * @param nickName
+     * @return
+     */
+    User findByNickName(String nickName);
+
+    /**
+     * 根据邀请码查询用户
+     *
+     * @param inviteCode
+     * @return
+     */
+    User findByInviteCode(String inviteCode);
 }

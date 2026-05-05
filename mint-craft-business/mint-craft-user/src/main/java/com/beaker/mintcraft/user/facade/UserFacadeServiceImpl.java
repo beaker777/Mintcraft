@@ -1,9 +1,11 @@
 package com.beaker.mintcraft.user.facade;
 
 import com.beaker.mintcraft.api.user.request.UserQueryRequest;
+import com.beaker.mintcraft.api.user.request.UserRegisterRequest;
 import com.beaker.mintcraft.api.user.request.condition.impl.UserIdQueryCondition;
 import com.beaker.mintcraft.api.user.request.condition.impl.UserPhoneAndPasswordQueryCondition;
 import com.beaker.mintcraft.api.user.request.condition.impl.UserPhoneQueryCondition;
+import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
@@ -26,6 +28,11 @@ public class UserFacadeServiceImpl implements UserFacadeService {
     private UserService userService;
 
     @Override
+    public UserOperatorResponse register(UserRegisterRequest userRegisterRequest) {
+        return userService.register(userRegisterRequest.getTelephone(), userRegisterRequest.getInviteCode());
+    }
+
+    @Override
     public UserQueryResponse<UserInfo> query(UserQueryRequest userQueryRequest) {
         // 根据不同的查询条件进行查询
         User user = switch (userQueryRequest.getUserQueryCondition()) {
@@ -40,6 +47,8 @@ public class UserFacadeServiceImpl implements UserFacadeService {
         };
 
         UserQueryResponse<UserInfo> response = new UserQueryResponse<>();
+        // TODO 这里后续需要使用 mapStruct
+        if (user == null) return response;
         response.setSuccess(true);
         UserInfo userInfo = new UserInfo();
         userInfo.setUserId(user.getId());

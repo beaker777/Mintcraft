@@ -40,12 +40,26 @@
     </select>
 
     <select id="findByTelephoneAndPasswordHash" resultMap="BaseResultMap">
-        select * from users where deleted=0
+        select * from users where deleted = 0
         <if test="telephone!=null">
             and telephone = #{telephone}
         </if>
         <if test="passwordHash!=null">
             and password_hash = #{passwordHash}
+        </if>
+    </select>
+
+    <select id="findByNickName" resultMap="BaseResultMap">
+        select * from users where deleted = 0
+        <if test="nickName!=null">
+            and nick_name = #{nickName}
+        </if>
+    </select>
+
+    <select id="findByInviteCode" resultMap="BaseResultMap">
+        select * from users where deleted = 0
+        <if test="inviteCode!=null">
+            and invite_code = #{inviteCode}
         </if>
     </select>
 

@@ -3,6 +3,8 @@ package com.beaker.mintcraft.auth.controller;
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
 import com.beaker.mintcraft.api.user.request.UserQueryRequest;
+import com.beaker.mintcraft.api.user.request.UserRegisterRequest;
+import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
@@ -31,8 +33,10 @@ public class AuthController {
     @DubboReference
     private UserFacadeService userFacadeService;
 
+    // 测试用验证码
     private static final String ROOT_CAPTCHA = "8888";
 
+    // token 默认过期时间 7 天
     private static final Integer DEFAULT_LOGIN_SESSION_TIMEOUT = 60 * 60 * 24 * 7;
 
     /**
@@ -54,8 +58,29 @@ public class AuthController {
         UserInfo userInfo = userQueryResponse.getData();
         // 判断是需要注册还是直接登录
         if (userInfo == null) {
-            // TODO 需要注册
-            return Result.success(null);
+            // 注册
+            UserRegisterRequest userRegisterRequest = new UserRegisterRequest();
+            userRegisterRequest.setTelephone(loginParam.getTelephone());
+            userRegisterRequest.setPassword(loginParam.getInviteCode());
+
+            UserOperatorResponse response = userFacadeService.register(userRegisterRequest);
+            if (response.getSuccess()) {
+                // 如果注册成功, 再去数据库查询一遍
+                userQueryResponse = userFacadeService.query(userQueryRequest);
+                userInfo = userQueryResponse.getData();
+
+                StpUtil.login(userInfo.getUserId(),
+                        new SaLoginModel()
+                                .setIsLastingCookie(loginParam.getRememberMe())
+                                .setTimeout(DEFAULT_LOGIN_SESSION_TIMEOUT));
+                // 将用户信息保存到 sa-token 的 session 里
+                StpUtil.getSession().set(userInfo.getUserId().toString(), userInfo);
+
+                LoginVO loginVO = new LoginVO(userInfo);
+                return Result.success(loginVO);
+            }
+
+            return Result.error(response.getResponseCode(), response.getResponseMessage());
         } else {
             // 登录
             StpUtil.login(

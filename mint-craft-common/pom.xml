@@ -56,6 +56,20 @@
             <artifactId>guava</artifactId>
         </dependency>
 
+        <!--    hutool        -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.22</version>
+        </dependency>
+
+        <!--    lang3        -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+
         <!--    aspectj        -->
         <dependency>
             <groupId>org.aspectj</groupId>

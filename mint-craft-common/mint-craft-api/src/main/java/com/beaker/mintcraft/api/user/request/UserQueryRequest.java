@@ -5,7 +5,9 @@ import com.beaker.mintcraft.api.user.request.condition.impl.UserIdQueryCondition
 import com.beaker.mintcraft.api.user.request.condition.impl.UserPhoneAndPasswordQueryCondition;
 import com.beaker.mintcraft.api.user.request.condition.impl.UserPhoneQueryCondition;
 import com.beaker.mintcraft.base.request.BaseRequest;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @Author beaker
@@ -13,17 +15,13 @@ import lombok.Data;
  * @Description 用户查询请求
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserQueryRequest extends BaseRequest {
 
     private static final long serialVersionUID = 1L;
 
     private UserQueryCondition userQueryCondition;
-
-    /**
-     * Dubbo 序列化反序列化使用的无参构造器。
-     */
-    public UserQueryRequest() {
-    }
 
     /**
      * 构造按用户 ID 查询的请求。

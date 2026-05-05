@@ -89,4 +89,15 @@ public class User extends BaseEntity {
      * 用户角色
      */
     private UserRole userRole;
+
+    public User register(String telephone, String nickName, String password,String inviteCode,String inviterId) {
+        this.setTelephone(telephone);
+        this.setNickName(nickName);
+        this.setPasswordHash(password);
+        this.setState(UserState.INIT);
+        this.setUserRole(UserRole.CUSTOMER);
+        this.setInviteCode(inviteCode);
+        this.setInviterId(inviterId);
+        return this;
+    }
 }
