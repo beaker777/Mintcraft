@@ -10,6 +10,7 @@ import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import com.beaker.mintcraft.user.domain.entity.User;
+import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
 import com.beaker.mintcraft.user.domain.service.UserService;
 import jakarta.annotation.Resource;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -47,13 +48,8 @@ public class UserFacadeServiceImpl implements UserFacadeService {
         };
 
         UserQueryResponse<UserInfo> response = new UserQueryResponse<>();
-        // TODO 这里后续需要使用 mapStruct
-        if (user == null) return response;
+        UserInfo userInfo = UserConvertor.INSTANCE.mapToVO(user);
         response.setSuccess(true);
-        UserInfo userInfo = new UserInfo();
-        userInfo.setUserId(user.getId());
-        userInfo.setNickName(user.getNickName());
-        userInfo.setProfilePhotoUrl(user.getProfilePhotoUrl());
         response.setData(userInfo);
 
         return response;

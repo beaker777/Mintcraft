@@ -61,7 +61,7 @@ public class AuthController {
             // 注册
             UserRegisterRequest userRegisterRequest = new UserRegisterRequest();
             userRegisterRequest.setTelephone(loginParam.getTelephone());
-            userRegisterRequest.setPassword(loginParam.getInviteCode());
+            userRegisterRequest.setInviteCode(loginParam.getInviteCode());
 
             UserOperatorResponse response = userFacadeService.register(userRegisterRequest);
             if (response.getSuccess()) {

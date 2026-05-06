@@ -63,6 +63,12 @@
             <version>5.8.22</version>
         </dependency>
 
+        <!--    mapstruct        -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+        </dependency>
+
         <!--    lang3        -->
         <dependency>
             <groupId>org.apache.commons</groupId>
