@@ -44,4 +44,4 @@ jetcache:
       keyPrefix: ${spring.application.name}
       valueEncoder: java
       valueDecoder: java
-      defaultExpireInMillis: 5000
+      defaultExpireInMillis: 1800000

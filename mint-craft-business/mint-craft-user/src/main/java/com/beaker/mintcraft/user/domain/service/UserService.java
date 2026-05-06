@@ -2,6 +2,9 @@ package com.beaker.mintcraft.user.domain.service;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.RandomUtil;
+import com.alicp.jetcache.anno.CacheRefresh;
+import com.alicp.jetcache.anno.CacheType;
+import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.user.domain.entity.User;
@@ -14,6 +17,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.DUPLICATE_TELEPHONE_NUMBER;
 
@@ -49,6 +54,8 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
      * @param userId
      * @return
      */
+    @Cached(name = ":user:cache:id", cacheType = CacheType.BOTH, key = "#userId", cacheNullValue = true)
+    @CacheRefresh(refresh = 15, timeUnit = TimeUnit.MINUTES)
     public User findById(Long userId) {
         return userMapper.findById(userId);
     }
