@@ -1,10 +1,15 @@
 package com.beaker.mintcraft.user.domain.entity;
 
+import cn.hutool.crypto.digest.DigestUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.beaker.mintcraft.api.user.constant.UserRole;
 import com.beaker.mintcraft.api.user.constant.UserState;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
+import com.beaker.mintcraft.user.infrastructure.mapper.AesEncryptTypeHandler;
+import com.github.houbb.sensitive.annotation.strategy.SensitiveStrategyPhone;
 import lombok.Data;
+import org.apache.commons.codec.cli.Digest;
 
 import java.util.Date;
 
@@ -45,7 +50,7 @@ public class User extends BaseEntity {
     /**
      * 手机号
      */
-    //@SensitiveStrategyPhone
+    @SensitiveStrategyPhone
     private String telephone;
 
     /**
@@ -76,13 +81,13 @@ public class User extends BaseEntity {
     /**
      * 真实姓名
      */
-    //@TableField(typeHandler = AesEncryptTypeHandler.class)
+    @TableField(typeHandler = AesEncryptTypeHandler.class)
     private String realName;
 
     /**
      * 身份证hash
      */
-    //@TableField(typeHandler = AesEncryptTypeHandler.class)
+    @TableField(typeHandler = AesEncryptTypeHandler.class)
     private String idCardNo;
 
     /**
@@ -93,7 +98,7 @@ public class User extends BaseEntity {
     public User register(String telephone, String nickName, String password,String inviteCode,String inviterId) {
         this.setTelephone(telephone);
         this.setNickName(nickName);
-        this.setPasswordHash(password);
+        this.setPasswordHash(DigestUtil.md5Hex(password));
         this.setState(UserState.INIT);
         this.setUserRole(UserRole.CUSTOMER);
         this.setInviteCode(inviteCode);

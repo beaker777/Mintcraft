@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.api.user.response.data;
 
 import com.beaker.mintcraft.api.user.constant.UserRole;
+import com.github.houbb.sensitive.annotation.strategy.SensitiveStrategyPhone;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -19,7 +20,7 @@ public class UserInfo extends BasicUserInfo implements Serializable {
     /**
      * 手机号
      */
-    //@SensitiveStrategyPhone
+    @SensitiveStrategyPhone
     private String telephone;
 
     /**

@@ -2,6 +2,7 @@ package com.beaker.mintcraft.user.domain.service;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
@@ -78,7 +79,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
      * @return
      */
     public User findByTelephoneAndPassword(String telephone, String password) {
-        return userMapper.findByTelephoneAndPasswordHash(telephone, password);
+        return userMapper.findByTelephoneAndPasswordHash(telephone, DigestUtil.md5Hex(password));
     }
 
     public UserOperatorResponse register(String telephone, String inviteCode) {
@@ -103,6 +104,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
             }
         }
 
+        // fixme: 在极端情况下, 这里可能存在邀请码重复的情况, 代码不做特殊处理, 靠唯一索引保证
         User user = register(telephone, defaultNickName, telephone, randomString, inviterId);
         Assert.notNull(user, UserErrorCode.USER_OPERATE_FAILED.getCode());
 
@@ -112,6 +114,8 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
 
         // TODO 在这里需要更新邀请者的排名
         // TODO 在这里需要更新用户的 redis 缓存
+
+        // TODO 这里需要加入流水
 
         UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
         userOperatorResponse.setSuccess(true);

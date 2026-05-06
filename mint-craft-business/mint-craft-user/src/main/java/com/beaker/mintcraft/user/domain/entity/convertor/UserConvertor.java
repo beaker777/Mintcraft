@@ -36,7 +36,6 @@ public interface UserConvertor {
      * @param request
      * @return
      */
-    @Mapping(target = "userId", source = "request.id")
     public List<UserInfo> mapToVo(List<User> request);
 
     /**
