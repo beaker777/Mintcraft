@@ -6,6 +6,7 @@ import com.beaker.mintcraft.api.user.param.UserModifyParam;
 import com.beaker.mintcraft.api.user.request.UserModifyRequest;
 import com.beaker.mintcraft.api.user.response.data.BasicUserInfo;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
+import com.beaker.mintcraft.file.FileService;
 import com.beaker.mintcraft.user.domain.entity.User;
 import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
 import com.beaker.mintcraft.user.domain.service.UserService;
@@ -16,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.USER_NOT_EXIST;
-import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.USER_PASSWD_CHECK_FAIL;
+import java.io.InputStream;
+
+import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.*;
 
 /**
  * @Author beaker
@@ -32,6 +35,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FileService fileService;
 
     @GetMapping("/getUserInfo")
     public Result<UserInfo> getUserInfo() {
@@ -92,5 +98,36 @@ public class UserController {
 
         Boolean modifyResult = userService.modify(userModifyRequest).getSuccess();
         return Result.success(modifyResult);
+    }
+
+    @PostMapping("/modifyProfilePhoto")
+    public Result<String> modifyProfilePhoto(@RequestParam("file_data") MultipartFile file, InputStream inputStream) throws Exception {
+        String userId = (String) StpUtil.getLoginId();
+        String prefix = "https://mintcraft.oss-cn-beijing.aliyuncs.com/";
+
+        if (file == null) {
+            throw new UserException(USER_UPLOAD_PICTURE_FAIL);
+        }
+
+        // 上传文件到阿里云 OSS
+        String filename = file.getOriginalFilename();
+        InputStream fileStream = file.getInputStream();
+        String path = "profile" + userId + "/" + filename;
+        boolean res = fileService.upload(path, fileStream);
+
+        if (!res) {
+            throw new UserException(USER_UPLOAD_PICTURE_FAIL);
+        }
+
+        // 修改信息
+        UserModifyRequest userModifyRequest = new UserModifyRequest();
+        userModifyRequest.setUserId(Long.valueOf(userId));
+        userModifyRequest.setProfilePhotoUrl(prefix + path);
+
+        Boolean modifyResult = userService.modify(userModifyRequest).getSuccess();
+        if (!modifyResult) {
+            throw new UserException(USER_UPLOAD_PICTURE_FAIL);
+        }
+        return Result.success(prefix + path);
     }
 }
