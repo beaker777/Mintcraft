@@ -1,6 +1,6 @@
 package com.beaker.mintcraft.user.infrastructure.exception;
 
-import com.beaker.mintcraft.base.exception.BizException;
+import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.ErrorCode;
 
 /**

@@ -1,7 +1,7 @@
 package com.beaker.mintcraft.rpc.support;
 
 import com.alibaba.fastjson2.JSON;
-import com.beaker.mintcraft.base.exception.RemoteCallException;
+import com.beaker.mintcraft.base.exception.system.RemoteCallException;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +12,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.function.Function;
 
-import static com.beaker.mintcraft.base.exception.SystemErrorCode.REMOTE_CALL_RESPONSE_IS_FAILED;
-import static com.beaker.mintcraft.base.exception.SystemErrorCode.REMOTE_CALL_RESPONSE_IS_NULL;
+import static com.beaker.mintcraft.base.exception.system.SystemErrorCode.REMOTE_CALL_RESPONSE_IS_FAILED;
+import static com.beaker.mintcraft.base.exception.system.SystemErrorCode.REMOTE_CALL_RESPONSE_IS_NULL;
 
 /**
  * @Author beaker

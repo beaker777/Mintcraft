@@ -1,7 +1,7 @@
 package com.beaker.mintcraft.web.handler;
 
-import com.beaker.mintcraft.base.exception.BizException;
-import com.beaker.mintcraft.base.exception.SystemException;
+import com.beaker.mintcraft.base.exception.biz.BizException;
+import com.beaker.mintcraft.base.exception.system.SystemException;
 import com.beaker.mintcraft.web.vo.Result;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;

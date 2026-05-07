@@ -7,7 +7,10 @@ import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.beaker.mintcraft.api.user.constant.UserOperateTypeEnum;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
+import com.beaker.mintcraft.base.exception.biz.BizException;
+import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.user.domain.entity.User;
 import com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode;
@@ -39,6 +42,9 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
     private UserMapper userMapper;
 
     @Autowired
+    private UserOperateStreamService userOperateStreamService;
+
+    @Autowired
     private RedissonClient redissonClient;
 
     /**
@@ -57,7 +63,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
      * @param userId
      * @return
      */
-    @Cached(name = ":user:cache:id", cacheType = CacheType.BOTH, key = "#userId", cacheNullValue = true)
+    @Cached(name = ":user:cache:id:", cacheType = CacheType.BOTH, key = "#userId", cacheNullValue = true)
     @CacheRefresh(refresh = 15, timeUnit = TimeUnit.MINUTES)
     public User findById(Long userId) {
         return userMapper.findById(userId);
@@ -115,11 +121,12 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         // 更新布隆过滤器
         addNickName(defaultNickName);
         addInviteCode(randomString);
-
         // TODO 在这里需要更新邀请者的排名
         // TODO 在这里需要更新用户的 redis 缓存
 
-        // TODO 这里需要加入流水
+        // 加入流水
+        long streamResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.REGISTER);
+        Assert.notNull(streamResult, () -> new BizException(RepoErrorCode.INSERT_FAILED));
 
         UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
         userOperatorResponse.setSuccess(true);

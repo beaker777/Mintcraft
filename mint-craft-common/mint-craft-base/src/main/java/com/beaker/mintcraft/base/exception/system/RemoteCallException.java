@@ -1,4 +1,6 @@
-package com.beaker.mintcraft.base.exception;
+package com.beaker.mintcraft.base.exception.system;
+
+import com.beaker.mintcraft.base.exception.ErrorCode;
 
 /**
  * @Author beaker

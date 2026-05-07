@@ -1,8 +1,8 @@
 package com.beaker.mintcraft.rpc.facade;
 
 import com.alibaba.fastjson2.JSON;
-import com.beaker.mintcraft.base.exception.BizException;
-import com.beaker.mintcraft.base.exception.SystemException;
+import com.beaker.mintcraft.base.exception.biz.BizException;
+import com.beaker.mintcraft.base.exception.system.SystemException;
 import com.beaker.mintcraft.base.response.BaseResponse;
 import com.beaker.mintcraft.base.response.ResponseCode;
 import com.beaker.mintcraft.base.utils.BeanValidator;

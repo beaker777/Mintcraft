@@ -1,35 +1,37 @@
-package com.beaker.mintcraft.base.exception;
+package com.beaker.mintcraft.base.exception.system;
+
+import com.beaker.mintcraft.base.exception.ErrorCode;
 
 /**
  * @Author beaker
- * @Date 2026/4/26 19:10
- * @Description 业务异常
+ * @Date 2026/4/26 19:58
+ * @Description 系统异常
  */
-public class BizException extends RuntimeException {
+public class SystemException extends RuntimeException{
 
     private ErrorCode errorCode;
 
-    public BizException(ErrorCode errorCode) {
+    public SystemException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
 
-    public BizException(String message, ErrorCode errorCode) {
+    public SystemException(String message, ErrorCode errorCode) {
         super(message);
         this.errorCode = errorCode;
     }
 
-    public BizException(Throwable cause, ErrorCode errorCode) {
+    public SystemException(Throwable cause, ErrorCode errorCode) {
         super(cause);
         this.errorCode = errorCode;
     }
 
-    public BizException(String message, Throwable cause, ErrorCode errorCode) {
+    public SystemException(String message, Throwable cause, ErrorCode errorCode) {
         super(message, cause);
         this.errorCode = errorCode;
     }
 
-    public BizException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, ErrorCode errorCode) {
+    public SystemException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, ErrorCode errorCode) {
         super(message, cause, enableSuppression, writableStackTrace);
         this.errorCode = errorCode;
     }
