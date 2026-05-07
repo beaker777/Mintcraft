@@ -23,6 +23,7 @@ public class DatasourceConfiguration {
         return new DataObjectHandler();
     }
 
+    @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
 

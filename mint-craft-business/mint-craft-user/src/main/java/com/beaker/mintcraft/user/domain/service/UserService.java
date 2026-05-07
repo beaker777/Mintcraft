@@ -3,11 +3,13 @@ package com.beaker.mintcraft.user.domain.service;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import com.alicp.jetcache.anno.CacheInvalidate;
 import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.user.constant.UserOperateTypeEnum;
+import com.beaker.mintcraft.api.user.request.UserModifyRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
@@ -19,6 +21,7 @@ import com.beaker.mintcraft.user.infrastructure.mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.DUPLICATE_TELEPHONE_NUMBER;
+import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.*;
 
 /**
  * @Author beaker
@@ -154,6 +157,46 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         user.register(telephone, nickName, password, inviteCode, inviterId);
 
         return save(user) ? user : null;
+    }
+
+    @CacheInvalidate(name = ":user:cache:id:", key = "#userModifyRequest.userId")
+    @Transactional(rollbackFor = Exception.class)
+    public UserOperatorResponse modify(UserModifyRequest userModifyRequest) {
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        // 根据 id 获取用户
+        User user = userMapper.findById(userModifyRequest.getUserId());
+        Assert.notNull(user, () -> new UserException(USER_NOT_EXIST));
+        Assert.isTrue(user.canModifyInfo(), () -> new UserException(USER_STATUS_CANT_OPERATE));
+
+        // 校验新名称是否重复
+        if (StringUtils.isNotBlank(userModifyRequest.getNickName()) && nickNameExist(userModifyRequest.getNickName())) {
+            throw new UserException(NICK_NAME_EXIST);
+        }
+
+        // 更新用户信息
+        BeanUtils.copyProperties(userModifyRequest, user);
+        if (StringUtils.isNotBlank(userModifyRequest.getPassword())) {
+            user.setPasswordHash(DigestUtil.md5Hex(userModifyRequest.getPassword()));
+        }
+
+        if (updateById(user)) {
+            // 加入流水
+            long streamResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.MODIFY);
+            Assert.notNull(streamResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+            // 更新布隆过滤器
+            addNickName(userModifyRequest.getNickName());
+
+            userOperatorResponse.setSuccess(true);
+            return userOperatorResponse;
+        }
+
+        // 更新失败
+        userOperatorResponse.setSuccess(false);
+        userOperatorResponse.setResponseCode(USER_OPERATE_FAILED.getCode());
+        userOperatorResponse.setResponseMessage(USER_OPERATE_FAILED.getMessage());
+        return userOperatorResponse;
     }
 
     public boolean nickNameExist(String nickName) {

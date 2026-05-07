@@ -95,7 +95,7 @@ public class User extends BaseEntity {
      */
     private UserRole userRole;
 
-    public User register(String telephone, String nickName, String password,String inviteCode,String inviterId) {
+    public User register(String telephone, String nickName, String password, String inviteCode,String inviterId) {
         this.setTelephone(telephone);
         this.setNickName(nickName);
         this.setPasswordHash(DigestUtil.md5Hex(password));
@@ -104,5 +104,9 @@ public class User extends BaseEntity {
         this.setInviteCode(inviteCode);
         this.setInviterId(inviterId);
         return this;
+    }
+
+    public boolean canModifyInfo() {
+        return state == UserState.INIT || state == UserState.AUTH || state == UserState.ACTIVE;
     }
 }
