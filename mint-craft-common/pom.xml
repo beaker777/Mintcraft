@@ -22,6 +22,7 @@
         <module>mint-craft-api</module>
         <module>mint-craft-sa-token</module>
         <module>mint-craft-cache</module>
+        <module>mint-craft-lock</module>
     </modules>
 
     <properties>

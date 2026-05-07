@@ -8,6 +8,7 @@ import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
+import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.user.domain.entity.User;
 import com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode;
 import com.beaker.mintcraft.user.infrastructure.exception.UserException;
@@ -18,6 +19,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
@@ -82,6 +84,8 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         return userMapper.findByTelephoneAndPasswordHash(telephone, DigestUtil.md5Hex(password));
     }
 
+    @DistributeLock(scene = "USER_REGISTER", keyExpression = "#telephone")
+    @Transactional(rollbackFor = Exception.class)
     public UserOperatorResponse register(String telephone, String inviteCode) {
         String defaultNickName;
         String randomString;

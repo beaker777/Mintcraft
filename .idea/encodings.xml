@@ -10,6 +10,7 @@
     <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-base/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-cache/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-datasource/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-lock/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-rpc/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-sa-token/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-common/mint-craft-web/src/main/java" charset="UTF-8" />
