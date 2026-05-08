@@ -26,6 +26,7 @@
         <module>mint-craft-file</module>
         <module>mint-craft-config</module>
         <module>mint-craft-sms</module>
+        <module>mint-craft-limiter</module>
     </modules>
 
     <properties>
