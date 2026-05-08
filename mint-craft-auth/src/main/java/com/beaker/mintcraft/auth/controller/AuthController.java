@@ -10,13 +10,20 @@ import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
+import com.beaker.mintcraft.auth.exception.AuthException;
 import com.beaker.mintcraft.auth.param.LoginParam;
 import com.beaker.mintcraft.auth.valobj.LoginVO;
 import com.beaker.mintcraft.web.vo.Result;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import static com.beaker.mintcraft.api.notice.constant.NoticeConstant.CAPTCHA_KEY_PREFIX;
+import static com.beaker.mintcraft.auth.exception.AuthErrorCode.VERIFICATION_CODE_WRONG;
 
 /**
  * @Author beaker
@@ -33,6 +40,9 @@ public class AuthController {
 
     @DubboReference
     private NoticeFacadeService noticeFacadeService;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     // 测试用验证码
     private static final String ROOT_CAPTCHA = "8888";
@@ -54,9 +64,12 @@ public class AuthController {
      */
     @PostMapping("/login")
     public Result<LoginVO> login(@Valid @RequestBody LoginParam loginParam) {
-        // TODO 为了方便, 暂时跳过验证码校验
         if (!ROOT_CAPTCHA.equals(loginParam.getCaptcha())) {
-            // 校验验证码
+            // 如果不是我们留下的后门, 校验验证码
+            String cachedCode = redisTemplate.opsForValue().get(CAPTCHA_KEY_PREFIX + loginParam.getTelephone());
+            if (!StringUtils.equals(cachedCode, loginParam.getCaptcha())) {
+                throw new AuthException(VERIFICATION_CODE_WRONG);
+            }
         }
 
         // 根据电话号查询用户信息
