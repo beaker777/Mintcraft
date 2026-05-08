@@ -24,6 +24,7 @@
         <module>mint-craft-cache</module>
         <module>mint-craft-lock</module>
         <module>mint-craft-file</module>
+        <module>mint-craft-config</module>
     </modules>
 
     <properties>

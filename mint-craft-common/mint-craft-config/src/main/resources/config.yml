@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${mintcraft.nacos.server.url}
+      config:
+        server-addr: ${mintcraft.nacos.server.url}
+        file-extension: yml
+        name: ${spring.application.name}

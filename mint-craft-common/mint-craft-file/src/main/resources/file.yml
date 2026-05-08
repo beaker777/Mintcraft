@@ -1,6 +1,0 @@
-spring:
-  oss:
-    bucket: mintcraft
-    end-point: oss-cn-beijing.aliyuncs.com
-    access-key: ur key
-    access-secret: ur secret
