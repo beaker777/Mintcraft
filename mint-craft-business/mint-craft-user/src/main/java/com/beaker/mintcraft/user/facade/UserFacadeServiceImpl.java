@@ -9,6 +9,7 @@ import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
+import com.beaker.mintcraft.rpc.facade.Facade;
 import com.beaker.mintcraft.user.domain.entity.User;
 import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
 import com.beaker.mintcraft.user.domain.service.UserService;
@@ -28,11 +29,13 @@ public class UserFacadeServiceImpl implements UserFacadeService {
     @Resource
     private UserService userService;
 
+    @Facade
     @Override
     public UserOperatorResponse register(UserRegisterRequest userRegisterRequest) {
         return userService.register(userRegisterRequest.getTelephone(), userRegisterRequest.getInviteCode());
     }
 
+    @Facade
     @Override
     public UserQueryResponse<UserInfo> query(UserQueryRequest userQueryRequest) {
         // 根据不同的查询条件进行查询

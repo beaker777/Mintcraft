@@ -25,6 +25,7 @@
         <module>mint-craft-lock</module>
         <module>mint-craft-file</module>
         <module>mint-craft-config</module>
+        <module>mint-craft-sms</module>
     </modules>
 
     <properties>

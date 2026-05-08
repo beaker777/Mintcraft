@@ -2,6 +2,8 @@ package com.beaker.mintcraft.auth.controller;
 
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
+import com.beaker.mintcraft.api.notice.response.NoticeResponse;
+import com.beaker.mintcraft.api.notice.service.NoticeFacadeService;
 import com.beaker.mintcraft.api.user.request.UserQueryRequest;
 import com.beaker.mintcraft.api.user.request.UserRegisterRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
@@ -14,10 +16,7 @@ import com.beaker.mintcraft.web.vo.Result;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @Author beaker
@@ -26,17 +25,26 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     @DubboReference
     private UserFacadeService userFacadeService;
+
+    @DubboReference
+    private NoticeFacadeService noticeFacadeService;
 
     // 测试用验证码
     private static final String ROOT_CAPTCHA = "8888";
 
     // token 默认过期时间 7 天
     private static final Integer DEFAULT_LOGIN_SESSION_TIMEOUT = 60 * 60 * 24 * 7;
+
+    @GetMapping("/sendCaptcha")
+    public Result<Boolean> sendCaptcha(String telephone) {
+        NoticeResponse noticeResponse = noticeFacadeService.generateAndSendSmsCaptcha(telephone);
+        return Result.success(noticeResponse.getSuccess());
+    }
 
     /**
      * 登录
