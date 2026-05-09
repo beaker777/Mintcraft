@@ -103,6 +103,16 @@ public class User extends BaseEntity {
         this.setUserRole(UserRole.CUSTOMER);
         this.setInviteCode(inviteCode);
         this.setInviterId(inviterId);
+
+        return this;
+    }
+
+    public User auth(String realName, String idCardNo) {
+        this.setRealName(realName);
+        this.setIdCardNo(idCardNo);
+        this.setCertification(true);
+        this.setState(UserState.AUTH);
+
         return this;
     }
 

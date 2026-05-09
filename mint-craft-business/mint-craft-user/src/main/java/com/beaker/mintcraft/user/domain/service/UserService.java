@@ -9,12 +9,15 @@ import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.user.constant.UserOperateTypeEnum;
+import com.beaker.mintcraft.api.user.constant.UserState;
+import com.beaker.mintcraft.api.user.request.UserAuthRequest;
 import com.beaker.mintcraft.api.user.request.UserModifyRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.user.domain.entity.User;
+import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
 import com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode;
 import com.beaker.mintcraft.user.infrastructure.exception.UserException;
 import com.beaker.mintcraft.user.infrastructure.mapper.UserMapper;
@@ -48,6 +51,9 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
     private UserOperateStreamService userOperateStreamService;
 
     @Autowired
+    private AuthService authService;
+
+    @Autowired
     private RedissonClient redissonClient;
 
     /**
@@ -66,7 +72,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
      * @param userId
      * @return
      */
-    @Cached(name = ":user:cache:id:", cacheType = CacheType.BOTH, key = "#userId", cacheNullValue = true)
+    @Cached(name = ":user:cache:id:", cacheType = CacheType.BOTH, key = "args[0]", cacheNullValue = true)
     @CacheRefresh(refresh = 15, timeUnit = TimeUnit.MINUTES)
     public User findById(Long userId) {
         return userMapper.findById(userId);
@@ -159,7 +165,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         return save(user) ? user : null;
     }
 
-    @CacheInvalidate(name = ":user:cache:id:", key = "#userModifyRequest.userId")
+    @CacheInvalidate(name = ":user:cache:id:", key = "args[0].userId")
     @Transactional(rollbackFor = Exception.class)
     public UserOperatorResponse modify(UserModifyRequest userModifyRequest) {
         UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
@@ -177,6 +183,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         // 更新用户信息
         BeanUtils.copyProperties(userModifyRequest, user);
         if (StringUtils.isNotBlank(userModifyRequest.getPassword())) {
+            // 单独更新密码, 使用 md5 加密
             user.setPasswordHash(DigestUtil.md5Hex(userModifyRequest.getPassword()));
         }
 
@@ -189,13 +196,56 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
             addNickName(userModifyRequest.getNickName());
 
             userOperatorResponse.setSuccess(true);
+        } else {
+            // 更新失败
+            userOperatorResponse.setSuccess(false);
+            userOperatorResponse.setResponseCode(USER_OPERATE_FAILED.getCode());
+            userOperatorResponse.setResponseMessage(USER_OPERATE_FAILED.getMessage());
+        }
+
+        return userOperatorResponse;
+    }
+
+    @CacheInvalidate(name = ":user:cache:id:", key = "args[0].userId")
+    @Transactional(rollbackFor = Exception.class)
+    public UserOperatorResponse auth(UserAuthRequest userAuthRequest) {
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        // 根据 id 查询用户
+        User user = userMapper.findById(userAuthRequest.getUserId());
+        Assert.notNull(user, () -> new UserException(USER_NOT_EXIST));
+
+        // 幂等校验
+        if (user.getState() == UserState.AUTH || user.getState() == UserState.ACTIVE) {
+            userOperatorResponse.setSuccess(true);
+            userOperatorResponse.setUserInfo(UserConvertor.INSTANCE.mapToVO(user));
             return userOperatorResponse;
         }
 
-        // 更新失败
-        userOperatorResponse.setSuccess(false);
-        userOperatorResponse.setResponseCode(USER_OPERATE_FAILED.getCode());
-        userOperatorResponse.setResponseMessage(USER_OPERATE_FAILED.getMessage());
+        // 如果用户状态不是 INIT, 无法进行实名认证
+        Assert.isTrue(user.getState() == UserState.INIT, () -> new UserException(USER_STATUS_IS_NOT_INIT));
+
+        // 进行实名认证
+        Assert.isTrue(authService.checkAuth(userAuthRequest.getRealName(), userAuthRequest.getIdCard()),
+                () -> new UserException(USER_AUTH_FAIL));
+
+        // 更新用户信息
+        user.auth(userAuthRequest.getRealName(), userAuthRequest.getIdCard());
+
+        if (updateById(user)) {
+            // 加入流水
+            long streamResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.AUTH);
+            Assert.notNull(streamResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+            userOperatorResponse.setSuccess(true);
+            userOperatorResponse.setUserInfo(UserConvertor.INSTANCE.mapToVO(user));
+        } else {
+            // 更新用户信息失败
+            userOperatorResponse.setSuccess(false);
+            userOperatorResponse.setResponseCode(USER_OPERATE_FAILED.getCode());
+            userOperatorResponse.setResponseMessage(USER_OPERATE_FAILED.getMessage());
+        }
+
         return userOperatorResponse;
     }
 

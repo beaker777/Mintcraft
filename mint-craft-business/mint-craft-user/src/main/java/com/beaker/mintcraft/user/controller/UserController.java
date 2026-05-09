@@ -2,8 +2,11 @@ package com.beaker.mintcraft.user.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import com.beaker.mintcraft.api.user.param.UserAuthParam;
 import com.beaker.mintcraft.api.user.param.UserModifyParam;
+import com.beaker.mintcraft.api.user.request.UserAuthRequest;
 import com.beaker.mintcraft.api.user.request.UserModifyRequest;
+import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.data.BasicUserInfo;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.file.FileService;
@@ -129,5 +132,25 @@ public class UserController {
             throw new UserException(USER_UPLOAD_PICTURE_FAIL);
         }
         return Result.success(prefix + path);
+    }
+
+    @PostMapping("/auth")
+    public Result<Boolean> auth(@Valid @RequestBody UserAuthParam userAuthParam) {
+        // 获取 userId
+        String userId = (String) StpUtil.getLoginId();
+
+        // 实名认证
+        UserAuthRequest userAuthRequest = new UserAuthRequest();
+        userAuthRequest.setUserId(Long.valueOf(userId));
+        userAuthRequest.setRealName(userAuthParam.getRealName());
+        userAuthRequest.setIdCard(userAuthParam.getIdCard());
+        UserOperatorResponse authResult = userService.auth(userAuthRequest);
+
+        if (authResult.getSuccess()) {
+            // TODO: 实名认证成功, 需要进行上链
+            return Result.success(true);
+        }
+
+        return Result.error(authResult.getResponseCode(), authResult.getResponseMessage());
     }
 }

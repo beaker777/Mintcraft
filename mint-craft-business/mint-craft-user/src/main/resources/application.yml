@@ -3,6 +3,8 @@ spring:
     name: mint-craft-user
   config:
     import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml
+  profiles:
+    active: dev
 
 server:
   port: 8083
