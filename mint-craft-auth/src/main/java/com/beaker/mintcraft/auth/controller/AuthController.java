@@ -12,6 +12,7 @@ import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import com.beaker.mintcraft.auth.exception.AuthException;
 import com.beaker.mintcraft.auth.param.LoginParam;
+import com.beaker.mintcraft.auth.param.RegisterParam;
 import com.beaker.mintcraft.auth.valobj.LoginVO;
 import com.beaker.mintcraft.web.vo.Result;
 import jakarta.validation.Valid;
@@ -54,6 +55,26 @@ public class AuthController {
     public Result<Boolean> sendCaptcha(String telephone) {
         NoticeResponse noticeResponse = noticeFacadeService.generateAndSendSmsCaptcha(telephone);
         return Result.success(noticeResponse.getSuccess());
+    }
+
+    @PostMapping("/register")
+    public Result<Boolean> register(@Valid @RequestBody RegisterParam registerParam) {
+        // 校验验证码
+        String cachedCode = redisTemplate.opsForValue().get(CAPTCHA_KEY_PREFIX + registerParam.getTelephone());
+        if (!StringUtils.equals(cachedCode, registerParam.getCaptcha())) {
+            throw new AuthException(VERIFICATION_CODE_WRONG);
+        }
+
+        // 注册
+        UserRegisterRequest userRegisterRequest = new UserRegisterRequest();
+        userRegisterRequest.setTelephone(registerParam.getTelephone());
+        userRegisterRequest.setInviteCode(registerParam.getInviteCode());
+
+        UserOperatorResponse registerResult = userFacadeService.register(userRegisterRequest);
+        if (registerResult.getSuccess()) {
+            return Result.success(true);
+        }
+        return Result.error(registerResult.getResponseCode(), registerResult.getResponseMessage());
     }
 
     /**
@@ -115,4 +136,11 @@ public class AuthController {
             return Result.success(loginVO);
         }
     }
+
+    @PostMapping("/logout")
+    public Result<Boolean> logout() {
+        StpUtil.logout();
+        return Result.success(true);
+    }
+
 }

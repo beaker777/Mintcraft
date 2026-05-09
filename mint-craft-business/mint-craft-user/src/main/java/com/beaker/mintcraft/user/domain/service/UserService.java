@@ -111,7 +111,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
 
             // 默认用户名: 前缀 + 随机字符串 + 手机号后四位
             defaultNickName = DEFAULT_NICK_NAME_PREFIX + randomString + telephone.substring(7, 11);
-        } while (nickNameExist(defaultNickName) || inviteCodeExist(inviteCode));
+        } while (nickNameExist(defaultNickName) || inviteCodeExist(randomString));
 
         // 根据邀请码获取到邀请者 id
         String inviterId = null;
