@@ -14,6 +14,7 @@ import com.beaker.mintcraft.auth.exception.AuthException;
 import com.beaker.mintcraft.auth.param.LoginParam;
 import com.beaker.mintcraft.auth.param.RegisterParam;
 import com.beaker.mintcraft.auth.valobj.LoginVO;
+import com.beaker.mintcraft.base.validator.IsMobile;
 import com.beaker.mintcraft.web.vo.Result;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class AuthController {
     private static final Integer DEFAULT_LOGIN_SESSION_TIMEOUT = 60 * 60 * 24 * 7;
 
     @GetMapping("/sendCaptcha")
-    public Result<Boolean> sendCaptcha(String telephone) {
+    public Result<Boolean> sendCaptcha(@IsMobile String telephone) {
         NoticeResponse noticeResponse = noticeFacadeService.generateAndSendSmsCaptcha(telephone);
         return Result.success(noticeResponse.getSuccess());
     }

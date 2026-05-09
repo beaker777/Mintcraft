@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.auth.param;
 
+import com.beaker.mintcraft.base.validator.IsMobile;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -14,7 +15,7 @@ public class RegisterParam {
     /**
      * 手机号
      */
-    //@IsMobile
+    @IsMobile
     private String telephone;
 
     /**
