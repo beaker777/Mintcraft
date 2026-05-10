@@ -72,8 +72,8 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
      * @param userId
      * @return
      */
-    @Cached(name = ":user:cache:id:", cacheType = CacheType.BOTH, key = "args[0]", cacheNullValue = true)
-    @CacheRefresh(refresh = 15, timeUnit = TimeUnit.MINUTES)
+    @Cached(name = ":user:cache:id:", expire = 60, localExpire = 10, timeUnit = TimeUnit.MINUTES, cacheType = CacheType.BOTH, key = "args[0]", cacheNullValue = true)
+    @CacheRefresh(refresh = 50, timeUnit = TimeUnit.MINUTES)
     public User findById(Long userId) {
         return userMapper.findById(userId);
     }

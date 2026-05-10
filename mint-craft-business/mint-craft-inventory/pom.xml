@@ -5,18 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.beaker</groupId>
-        <artifactId>MintCraft</artifactId>
+        <artifactId>mint-craft-business</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mint-craft-business</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>mint-craft-user</module>
-        <module>mint-craft-notice</module>
-        <module>mint-craft-goods</module>
-        <module>mint-craft-inventory</module>
-    </modules>
+    <artifactId>mint-craft-inventory</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

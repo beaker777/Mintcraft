@@ -2,6 +2,10 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/mint-craft-auth/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-goods/mint-craft-collection/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-goods/mint-craft-goods-interface/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-goods/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-inventory/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-notice/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-user/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-business/src/main/java" charset="UTF-8" />

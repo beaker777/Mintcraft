@@ -22,7 +22,7 @@ public class SingleResponse<T> extends BaseResponse {
         return singleResponse;
     }
 
-    private static <T> SingleResponse<T> fail(String errorCode, String errorMessage) {
+    public static <T> SingleResponse<T> fail(String errorCode, String errorMessage) {
         SingleResponse<T> singleResponse = new SingleResponse<>();
         singleResponse.setSuccess(false);
         singleResponse.setResponseCode(errorCode);

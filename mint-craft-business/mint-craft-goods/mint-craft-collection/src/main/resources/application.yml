@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: mint-craft-collection
+  config:
+    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml
+
+server:
+  port: 8086

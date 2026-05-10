@@ -1,0 +1,38 @@
+package com.beaker.mintcraft.collection.controller;
+
+import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
+import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
+import com.beaker.mintcraft.base.response.SingleResponse;
+import com.beaker.mintcraft.web.vo.Result;
+import jakarta.annotation.Resource;
+import jakarta.validation.constraints.NotBlank;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * @Author beaker
+ * @Date 2026/5/9 22:41
+ * @Description 藏品接口
+ */
+@Slf4j
+@RestController
+@RequestMapping("/goods/collection")
+public class CollectionController {
+
+    @Resource
+    private CollectionFacadeService collectionFacadeService;
+
+    /**
+     * 获取藏品信息
+     *
+     * @return
+     */
+    @GetMapping("/collectionInfo")
+    public Result<CollectionVO> collectionInfo(@NotBlank String collectionId) {
+        SingleResponse<CollectionVO> response = collectionFacadeService.queryById(Long.valueOf(collectionId));
+        return Result.success(response.getData());
+    }
+}

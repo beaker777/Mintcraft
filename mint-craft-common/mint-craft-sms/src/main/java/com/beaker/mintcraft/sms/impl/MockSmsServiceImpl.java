@@ -11,7 +11,6 @@ import com.beaker.mintcraft.sms.response.SmsSendResponse;
  */
 public class MockSmsServiceImpl implements SmsService {
 
-    @DistributeLock(scene = "SEND_SMS", keyExpression = "#phoneNumber")
     @Override
     public SmsSendResponse sendMsg(String phoneNumber, String code) {
         SmsSendResponse smsSendResponse = new SmsSendResponse();
