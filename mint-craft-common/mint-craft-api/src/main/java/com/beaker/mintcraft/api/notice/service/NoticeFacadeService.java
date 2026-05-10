@@ -5,7 +5,7 @@ import com.beaker.mintcraft.api.notice.response.NoticeResponse;
 /**
  * @Author beaker
  * @Date 2026/5/8 14:51
- * @Description notice 模块 facade 层
+ * @Description notice 模块 service 层
  */
 public interface NoticeFacadeService {
 

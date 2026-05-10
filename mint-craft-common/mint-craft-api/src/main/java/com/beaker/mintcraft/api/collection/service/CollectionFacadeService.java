@@ -6,7 +6,7 @@ import com.beaker.mintcraft.base.response.SingleResponse;
 /**
  * @Author beaker
  * @Date 2026/5/10 18:39
- * @Description 藏品 facade 层接口
+ * @Description 藏品 service 层接口
  */
 public interface CollectionFacadeService {
 

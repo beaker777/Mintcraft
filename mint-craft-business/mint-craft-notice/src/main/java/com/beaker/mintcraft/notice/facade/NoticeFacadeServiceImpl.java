@@ -25,7 +25,7 @@ import static com.beaker.mintcraft.base.exception.biz.BizErrorCode.SEND_NOTICE_D
 /**
  * @Author beaker
  * @Date 2026/5/8 14:52
- * @Description notice 模块 facade 实现类
+ * @Description notice 模块 service 实现类
  */
 @DubboService
 public class NoticeFacadeServiceImpl implements NoticeFacadeService {

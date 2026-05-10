@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 /**
  * @Author beaker
  * @Date 2026/4/29 14:17
- * @Description 用户模块 facade 层实现类
+ * @Description 用户模块 service 层实现类
  */
 @DubboService
 public class UserFacadeServiceImpl implements UserFacadeService {

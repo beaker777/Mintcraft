@@ -2,11 +2,15 @@ package com.beaker.mintcraft.collection.facade;
 
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
+import com.beaker.mintcraft.api.goods.constant.GoodsType;
+import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
+import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.entity.convertor.CollectionConvertor;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import jakarta.annotation.Resource;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 
 import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.COLLECTION_NOT_EXIST;
@@ -14,13 +18,16 @@ import static com.beaker.mintcraft.collection.infrastructure.exception.Collectio
 /**
  * @Author beaker
  * @Date 2026/5/10 18:29
- * @Description 藏品 facade 层实现
+ * @Description 藏品 service 层实现
  */
 @DubboService
 public class CollectionFacadeServiceImpl implements CollectionFacadeService {
 
     @Resource
     private CollectionService collectionService;
+
+    @DubboReference
+    private InventoryFacadeService inventoryFacadeService;
 
     @Override
     public SingleResponse<CollectionVO> queryById(Long collectionId) {
@@ -29,10 +36,21 @@ public class CollectionFacadeServiceImpl implements CollectionFacadeService {
             return SingleResponse.fail(COLLECTION_NOT_EXIST.getCode(), COLLECTION_NOT_EXIST.getMessage());
         }
 
-        // TODO: 去查询一遍最新的库存
+        // 去 redis 查询一遍最新库存
+        InventoryRequest inventoryRequest = new InventoryRequest();
+        inventoryRequest.setGoodsId(collectionId.toString());
+        inventoryRequest.setGoodsType(GoodsType.COLLECTION);
+        SingleResponse<Integer> response = inventoryFacadeService.queryInventory(inventoryRequest);
+
+        // 如果 redis 没查到库存, 用数据库的库存做兜底
+        Integer inventory = collection.getSaleableInventory().intValue();
+        if (response.getSuccess()) {
+            inventory = response.getData();
+        }
 
         CollectionVO collectionVO = CollectionConvertor.INSTANCE.mapToVo(collection);
         collectionVO.setState(collection.getState(), collection.getSaleTime(), collection.getSaleableInventory());
+        collectionVO.setInventory(inventory.longValue());
 
         return SingleResponse.of(collectionVO);
     }

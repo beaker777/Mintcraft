@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: mint-craft-inventory
+  config:
+    import: optional:classpath:base.yml, optional:classpath:config.yml
