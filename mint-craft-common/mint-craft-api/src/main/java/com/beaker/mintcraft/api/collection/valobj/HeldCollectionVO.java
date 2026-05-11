@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.api.collection.valobj;
 
 import com.beaker.mintcraft.api.collection.constant.CollectionRarity;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.util.Date;
  * @Date 2026/5/11 18:16
  * @Description 用户持有藏品 VO
  */
+@Data
 public class HeldCollectionVO implements Serializable {
 
     private static final long serialVersionUID = 1L;

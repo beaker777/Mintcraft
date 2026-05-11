@@ -2,8 +2,10 @@ package com.beaker.mintcraft.collection.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.beaker.mintcraft.api.collection.request.CollectionPageQueryRequest;
+import com.beaker.mintcraft.api.collection.request.HeldCollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
+import com.beaker.mintcraft.api.collection.valobj.HeldCollectionVO;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.web.util.MultiResultConvertor;
@@ -73,5 +75,34 @@ public class CollectionController {
 
         SingleResponse<Long> response = collectionFacadeService.queryHeldCollectionCount(userId);
         return Result.success(response.getData());
+    }
+
+    /**
+     * 用户持有藏品信息
+     *
+     * @param heldCollectionId
+     * @return
+     */
+    @GetMapping("/heldCollectionInfo")
+    public Result<HeldCollectionVO> heldCollectionInfo(@NotBlank String heldCollectionId) {
+        SingleResponse<HeldCollectionVO> response =
+                collectionFacadeService.queryHeldCollectionById(Long.valueOf(heldCollectionId));
+
+        return Result.success(response.getData());
+    }
+
+    @GetMapping("/heldCollectionList")
+    public MultiResult<HeldCollectionVO> heldCollectionList(String keyword, String state, int pageSize, int currentPage) {
+        String userId = (String) StpUtil.getLoginId();
+
+        HeldCollectionPageQueryRequest request = new HeldCollectionPageQueryRequest();
+        request.setUserId(userId);
+        request.setState(state);
+        request.setKeyword(keyword);
+        request.setPageSize(pageSize);
+        request.setCurrentPage(currentPage);
+
+        PageResponse<HeldCollectionVO> response = collectionFacadeService.pageQueryHeldCollection(request);
+        return MultiResultConvertor.convert(response);
     }
 }

@@ -1,15 +1,19 @@
 package com.beaker.mintcraft.collection.facade;
 
 import com.beaker.mintcraft.api.collection.request.CollectionPageQueryRequest;
+import com.beaker.mintcraft.api.collection.request.HeldCollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
+import com.beaker.mintcraft.api.collection.valobj.HeldCollectionVO;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
+import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.entity.convertor.CollectionConvertor;
+import com.beaker.mintcraft.collection.domain.entity.convertor.HeldCollectionConvertor;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import com.beaker.mintcraft.collection.domain.service.impl.HeldCollectionService;
 import jakarta.annotation.Resource;
@@ -77,5 +81,22 @@ public class CollectionFacadeServiceImpl implements CollectionFacadeService {
     @Override
     public SingleResponse<Long> queryHeldCollectionCount(String userId) {
         return SingleResponse.of(heldCollectionService.queryHeldCollectionCount(userId));
+    }
+
+    @Override
+    public SingleResponse<HeldCollectionVO> queryHeldCollectionById(Long heldCollectionId) {
+        HeldCollection heldCollection = heldCollectionService.queryById(heldCollectionId);
+
+        return SingleResponse.of(HeldCollectionConvertor.INSTANCE.mapToVo(heldCollection));
+    }
+
+    @Override
+    public PageResponse<HeldCollectionVO> pageQueryHeldCollection(HeldCollectionPageQueryRequest request) {
+        PageResponse<HeldCollection> collections = heldCollectionService.pageQueryByState(request);
+
+        return PageResponse.of(
+                HeldCollectionConvertor.INSTANCE.mapToVo(collections.getDatas()),
+                collections.getTotal(), collections.getPageSize(), collections.getCurrentPage()
+                );
     }
 }
