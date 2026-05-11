@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.collection.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.beaker.mintcraft.api.collection.request.CollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
@@ -59,5 +60,18 @@ public class CollectionController {
 
         PageResponse<CollectionVO> pageResponse = collectionFacadeService.pageQuery(collectionPageQueryRequest);
         return MultiResultConvertor.convert(pageResponse);
+    }
+
+    /**
+     * 用户持有藏品数量
+     *
+     * @return
+     */
+    @GetMapping("/heldCollectionCount")
+    public Result<Long> heldCollectionCount() {
+        String userId = (String) StpUtil.getLoginId();
+
+        SingleResponse<Long> response = collectionFacadeService.queryHeldCollectionCount(userId);
+        return Result.success(response.getData());
     }
 }

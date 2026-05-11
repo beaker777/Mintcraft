@@ -27,4 +27,11 @@ public interface CollectionFacadeService {
      * @return
      */
     public PageResponse<CollectionVO> pageQuery(CollectionPageQueryRequest request);
+
+    /**
+     * 持有藏品数量查询
+     * @param userId
+     * @return
+     */
+    public SingleResponse<Long> queryHeldCollectionCount(String userId);
 }

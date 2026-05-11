@@ -11,6 +11,7 @@ import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.entity.convertor.CollectionConvertor;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
+import com.beaker.mintcraft.collection.domain.service.impl.HeldCollectionService;
 import jakarta.annotation.Resource;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -27,6 +28,9 @@ public class CollectionFacadeServiceImpl implements CollectionFacadeService {
 
     @Resource
     private CollectionService collectionService;
+
+    @Resource
+    private HeldCollectionService heldCollectionService;
 
     @DubboReference
     private InventoryFacadeService inventoryFacadeService;
@@ -68,5 +72,10 @@ public class CollectionFacadeServiceImpl implements CollectionFacadeService {
                 CollectionConvertor.INSTANCE.mapToVo(collections.getDatas()),
                 collections.getTotal(), collections.getPageSize(), collections.getCurrentPage()
                 );
+    }
+
+    @Override
+    public SingleResponse<Long> queryHeldCollectionCount(String userId) {
+        return SingleResponse.of(heldCollectionService.queryHeldCollectionCount(userId));
     }
 }
