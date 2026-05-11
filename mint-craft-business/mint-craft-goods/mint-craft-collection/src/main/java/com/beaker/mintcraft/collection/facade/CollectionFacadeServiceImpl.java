@@ -1,10 +1,12 @@
 package com.beaker.mintcraft.collection.facade;
 
+import com.beaker.mintcraft.api.collection.request.CollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.entity.convertor.CollectionConvertor;
@@ -53,5 +55,18 @@ public class CollectionFacadeServiceImpl implements CollectionFacadeService {
         collectionVO.setInventory(inventory.longValue());
 
         return SingleResponse.of(collectionVO);
+    }
+
+    @Override
+    public PageResponse<CollectionVO> pageQuery(CollectionPageQueryRequest request) {
+        PageResponse<Collection> collections = collectionService.pageQueryByState(
+                request.getKeyword(), request.getState(), request.getCurrentPage(), request.getPageSize()
+        );
+
+        // 转换成 VO 并返回结果
+        return PageResponse.of(
+                CollectionConvertor.INSTANCE.mapToVo(collections.getDatas()),
+                collections.getTotal(), collections.getPageSize(), collections.getCurrentPage()
+                );
     }
 }

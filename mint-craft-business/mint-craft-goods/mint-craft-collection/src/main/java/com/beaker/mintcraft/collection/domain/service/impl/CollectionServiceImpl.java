@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionMapper;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,8 +15,7 @@ import java.util.concurrent.TimeUnit;
  * @Date 2026/5/10 18:01
  * @Description 藏品服务实现类
  */
-@Service
-public class CollectionServiceImpl extends ServiceImpl<CollectionMapper, Collection> implements CollectionService {
+public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper, Collection> implements CollectionService {
 
     @Override
     @Cached(name = ":collection:cache:id:", expire = 60, localExpire = 10, timeUnit = TimeUnit.MINUTES, cacheType = CacheType.BOTH, key = "args[0]", cacheNullValue = true)

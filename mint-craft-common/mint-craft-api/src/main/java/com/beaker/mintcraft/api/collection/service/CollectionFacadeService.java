@@ -1,6 +1,8 @@
 package com.beaker.mintcraft.api.collection.service;
 
+import com.beaker.mintcraft.api.collection.request.CollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
+import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 
 /**
@@ -17,4 +19,12 @@ public interface CollectionFacadeService {
      * @return
      */
     public SingleResponse<CollectionVO> queryById(Long collectionId);
+
+    /**
+     * 藏品分页查询
+     *
+     * @param request
+     * @return
+     */
+    public PageResponse<CollectionVO> pageQuery(CollectionPageQueryRequest request);
 }

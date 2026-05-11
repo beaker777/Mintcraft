@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.collection.domain.service;
 
+import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 
 /**
@@ -17,4 +18,14 @@ public interface CollectionService {
      */
     public Collection queryById(Long collectionId);
 
+    /**
+     * 分页查询
+     *
+     * @param keyWord
+     * @param state
+     * @param currentPage
+     * @param pageSize
+     * @return
+     */
+    public PageResponse<Collection> pageQueryByState(String keyWord, String state, int currentPage, int pageSize);
 }
