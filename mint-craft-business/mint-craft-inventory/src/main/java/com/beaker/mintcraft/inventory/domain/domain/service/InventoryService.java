@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.inventory.domain.domain.service;
 
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
+import com.beaker.mintcraft.api.inventory.response.InventoryResponse;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +11,15 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface InventoryService {
+
+
+    /**
+     * 初始化藏品库存
+     *
+     * @param request
+     * @return
+     */
+    public InventoryResponse init(InventoryRequest request);
 
     /**
      * 获取藏品库存

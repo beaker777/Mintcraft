@@ -11,6 +11,14 @@ import com.beaker.mintcraft.base.response.SingleResponse;
 public interface InventoryFacadeService {
 
     /**
+     * 库存初始化
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<Boolean> init(InventoryRequest inventoryRequest);
+
+    /**
      * 查询库存
      *
      * @param inventoryRequest
