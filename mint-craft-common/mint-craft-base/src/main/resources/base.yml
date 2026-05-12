@@ -24,3 +24,12 @@ mintcraft:
       namespace: dubbo_server
       # nacos 上的给 dubbo 用的 group
       group: dubbo
+  elasticsearch:
+    # 是否使用 es
+    enable: true
+    # ElasticSearch 的地址 + 端口号
+    url: 127.0.0.1:9200
+    # ElasticSearch 的用户名
+    username: elastic
+    # ElasticSearch 的密码
+    password: 123456

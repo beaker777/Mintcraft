@@ -1,0 +1,11 @@
+spring:
+  elasticsearch:
+    enable: ${mintcraft.elasticsearch.enable}
+    uris: http://${mintcraft.elasticsearch.url}
+    username: ${mintcraft.elasticsearch.username}
+    password: ${mintcraft.elasticsearch.password}
+easy-es:
+  enable: ${mintcraft.elasticsearch.enable}
+  address : ${mintcraft.elasticsearch.url}
+  username: ${mintcraft.elasticsearch.username}
+  password: ${mintcraft.elasticsearch.password}
