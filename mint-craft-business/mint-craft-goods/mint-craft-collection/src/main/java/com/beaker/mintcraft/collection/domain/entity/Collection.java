@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.beaker.mintcraft.api.collection.constant.CollectionState;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
 import lombok.Data;
+import org.dromara.easyes.annotation.IndexName;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -14,8 +18,8 @@ import java.util.Date;
  * @Description 藏品类
  */
 @Data
-//@Document(indexName = "nfturbo_collection")
-//@IndexName(value = "nfturbo_collection")
+@Document(indexName = "mintcraft_collection")
+@IndexName(value = "mintcraft_collection")
 @TableName("collection")
 public class Collection extends BaseEntity {
 
@@ -52,7 +56,7 @@ public class Collection extends BaseEntity {
     /**
      * '可售库存'
      */
-    //@Field(name = "saleable_inventory", type = FieldType.Long)
+    @Field(name = "saleable_inventory", type = FieldType.Long)
     private Long saleableInventory;
 
     /**
@@ -68,19 +72,19 @@ public class Collection extends BaseEntity {
     /**
      * '藏品创建时间'
      */
-    //@Field(name = "create_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
+    @Field(name = "create_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
     private Date createTime;
 
     /**
      * '藏品发售时间'
      */
-    //@Field(name = "sale_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
+    @Field(name = "sale_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
     private Date saleTime;
 
     /**
      * '藏品上链时间'
      */
-    //@Field(name = "sync_chain_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
+    @Field(name = "sync_chain_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
     private Date syncChainTime;
 
     /**
@@ -96,19 +100,19 @@ public class Collection extends BaseEntity {
     /**
      * 预约开始时间
      */
-    //@Field(name = "book_start_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
+    @Field(name = "book_start_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
     private Date bookStartTime;
 
     /**
      * 预约结束时间
      */
-    //@Field(name = "book_end_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
+    @Field(name = "book_end_time", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss || strict_date_optional_time || epoch_millis")
     private Date bookEndTime;
 
     /**
      * 是否预约
      */
-    //@Field(name = "can_book", type = FieldType.Integer)
+    @Field(name = "can_book", type = FieldType.Integer)
     private Integer canBook;
 
 }

@@ -6,6 +6,7 @@ import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.service.impl.CollectionServiceImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
  * @Description MySQL 实现分页查询
  */
 @Service
+@ConditionalOnProperty(value = "spring.elasticsearch.enable", havingValue = "false")
 public class CollectionDbService extends CollectionServiceImpl {
 
     @Override
