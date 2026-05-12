@@ -4,6 +4,7 @@ import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.service.impl.CollectionServiceImpl;
 import com.beaker.mintcraft.collection.infrastructure.es.mapper.CollectionEsMapper;
+import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,7 +30,7 @@ public class CollectionEsService extends CollectionServiceImpl {
     @Autowired
     private ElasticsearchOperations elasticsearchOperations;
 
-    @Autowired
+    @Resource
     private CollectionEsMapper collectionEsMapper;
 
     @Override

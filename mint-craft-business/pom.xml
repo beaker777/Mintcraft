@@ -16,6 +16,7 @@
         <module>mint-craft-notice</module>
         <module>mint-craft-goods</module>
         <module>mint-craft-inventory</module>
+        <module>mint-craft-order</module>
     </modules>
 
     <properties>

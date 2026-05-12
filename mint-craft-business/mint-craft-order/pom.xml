@@ -5,64 +5,63 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.beaker</groupId>
-        <artifactId>mint-craft-common</artifactId>
+        <artifactId>mint-craft-business</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
     <groupId>com.beaker</groupId>
-    <artifactId>mint-craft-datasource</artifactId>
-    <description>数据库组件</description>
+    <artifactId>mint-craft-order</artifactId>
+    <description>订单模块</description>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <shardingsphere.version>5.2.1</shardingsphere.version>
     </properties>
 
     <dependencies>
 
-        <!--    Mybatis    -->
         <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>3.0.3</version>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-datasource</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!--     Mybatis Plus    -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>3.5.5</version>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-limiter</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!-- MyBatis-Plus Generator -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.5.5</version>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!-- MySQL JDBC 驱动 -->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.27</version>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-rpc</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!-- Druid 数据库连接池 -->
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid</artifactId>
-            <version>1.2.20</version>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-lock</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!--shardingsphere-->
         <dependency>
-            <groupId>org.apache.shardingsphere</groupId>
-            <artifactId>shardingsphere-jdbc-core-spring-boot-starter</artifactId>
-            <version>${shardingsphere.version}</version>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-config</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-web</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <!--    shardingsphere 和 2.2 不兼容, 需要使用 1.33, 但是 1.33 和 springboot 3.2.2 不兼容.
