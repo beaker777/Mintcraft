@@ -24,6 +24,6 @@ public class OrderService extends ServiceImpl<OrderMapper, TradeOrder> {
      * @return
      */
     public TradeOrder getOrder(String orderId) {
-        return getById(orderId);
+        return orderMapper.selectByOrderId(orderId);
     }
 }

@@ -1,7 +1,7 @@
 package com.beaker.mintcraft.order.infrastructure.sharding;
 
 import com.beaker.mintcraft.order.sharding.id.DistributeID;
-import org.apache.dubbo.common.utils.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.shardingsphere.sharding.api.sharding.complex.ComplexKeysShardingAlgorithm;
 import org.apache.shardingsphere.sharding.api.sharding.complex.ComplexKeysShardingValue;
 import org.apache.shardingsphere.sharding.api.sharding.hint.HintShardingAlgorithm;
@@ -11,16 +11,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import static com.beaker.mintcraft.api.common.constant.CommonConstant.SEPARATOR;
 
 /**
  * @Author beaker
  * @Date 2026/5/13 14:15
  * @Description
  */
-public class KeyShardingAlgorithm implements ComplexKeysShardingAlgorithm<String>, HintShardingAlgorithm<String> {
+public class KeyShardingAlgorithm implements ComplexKeysShardingAlgorithm<String> {
 
     private static Logger logger = LoggerFactory.getLogger(KeyShardingAlgorithm.class);
 
@@ -78,11 +79,6 @@ public class KeyShardingAlgorithm implements ComplexKeysShardingAlgorithm<String
         }
 
         return null;
-    }
-
-    @Override
-    public Collection<String> doSharding(Collection<String> availableTargetNames, HintShardingValue<String> shardingValue) {
-        return List.of();
     }
 
     private String calculateShardingTarget(String buyerId) {
