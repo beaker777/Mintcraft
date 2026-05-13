@@ -28,6 +28,7 @@
         <module>mint-craft-sms</module>
         <module>mint-craft-limiter</module>
         <module>mint-craft-es</module>
+        <module>mint-craft-order-client</module>
     </modules>
 
     <properties>
