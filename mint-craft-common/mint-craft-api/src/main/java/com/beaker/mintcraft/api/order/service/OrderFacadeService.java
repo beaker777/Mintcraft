@@ -1,6 +1,8 @@
 package com.beaker.mintcraft.api.order.service;
 
+import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
+import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 
 /**
@@ -26,4 +28,12 @@ public interface OrderFacadeService {
      * @return
      */
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId, String userId);
+
+    /**
+     * 订单分页查询
+     *
+     * @param request
+     * @return
+     */
+    public PageResponse<TradeOrderVO> pageQuery(OrderPageQueryRequest request);
 }

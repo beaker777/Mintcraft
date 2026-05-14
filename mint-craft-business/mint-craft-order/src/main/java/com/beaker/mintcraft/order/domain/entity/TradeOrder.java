@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.order.domain.entity;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
@@ -19,6 +20,7 @@ import java.util.Date;
  * @Description 订单
  */
 @Data
+@TableName("trade_order")
 public class TradeOrder extends BaseEntity {
 
     /**
