@@ -17,4 +17,13 @@ public interface OrderFacadeService {
      * @return
      */
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId);
+
+    /**
+     * 订单详情
+     *
+     * @param orderId
+     * @param userId
+     * @return
+     */
+    public SingleResponse<TradeOrderVO> getTradeOrder(String orderId, String userId);
 }

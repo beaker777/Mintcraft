@@ -26,4 +26,14 @@ public class OrderService extends ServiceImpl<OrderMapper, TradeOrder> {
     public TradeOrder getOrder(String orderId) {
         return orderMapper.selectByOrderId(orderId);
     }
+
+    /**
+     * 查询订单信息
+     *
+     * @param orderId, userId
+     * @return
+     */
+    public TradeOrder getOrder(String orderId, String userId) {
+        return orderMapper.selectByOrderIdAndBuyer(orderId, userId);
+    }
 }

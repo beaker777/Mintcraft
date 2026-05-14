@@ -39,4 +39,8 @@
         SELECT * FROM `trade_order` where deleted = 0 AND order_id = #{orderId}
     </select>
 
+    <select id="selectByOrderIdAndBuyer" resultMap="tradeOrderMap">
+        SELECT * FROM `trade_order` where deleted = 0 AND order_id = #{orderId} AND buyer_id = #{buyerId}
+    </select>
+
 </mapper>

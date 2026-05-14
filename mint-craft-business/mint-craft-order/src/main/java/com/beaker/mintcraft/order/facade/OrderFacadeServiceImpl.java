@@ -23,4 +23,9 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId) {
         return SingleResponse.of(TradeOrderConvertor.INSTANCE.mapToVo(orderService.getOrder(orderId)));
     }
+
+    @Override
+    public SingleResponse<TradeOrderVO> getTradeOrder(String orderId, String userId) {
+        return SingleResponse.of(TradeOrderConvertor.INSTANCE.mapToVo(orderService.getOrder(orderId, userId)));
+    }
 }

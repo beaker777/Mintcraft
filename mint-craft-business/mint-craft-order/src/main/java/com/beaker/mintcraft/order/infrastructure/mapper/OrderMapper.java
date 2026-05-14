@@ -20,4 +20,14 @@ public interface OrderMapper extends BaseMapper<TradeOrder> {
      * @return 订单
      */
     TradeOrder selectByOrderId(@NotNull String orderId);
+
+    /**
+     * 根据订单号和买家ID查询订单
+     *
+     * @param orderId 订单号
+     * @param buyerId 买家ID
+     * @return 订单
+     */
+    TradeOrder selectByOrderIdAndBuyer(@NotNull String orderId, @NotNull String buyerId);
+
 }

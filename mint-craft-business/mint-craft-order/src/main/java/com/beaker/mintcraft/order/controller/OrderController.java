@@ -26,4 +26,9 @@ public class OrderController {
     public SingleResponse<TradeOrderVO> getOrder(String orderId) {
         return orderFacadeService.getTradeOrder(orderId);
     }
+
+    @GetMapping("/getOrderByBuyer")
+    public SingleResponse<TradeOrderVO> getOrderByBuyer(String orderId, String userId) {
+        return orderFacadeService.getTradeOrder(orderId, userId);
+    }
 }
