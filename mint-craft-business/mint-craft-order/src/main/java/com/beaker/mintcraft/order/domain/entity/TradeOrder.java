@@ -5,10 +5,13 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
+import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.pay.constant.PayChannel;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
+import com.beaker.mintcraft.order.domain.entity.convertor.TradeOrderConvertor;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
 import java.math.BigDecimal;
@@ -153,5 +156,25 @@ public class TradeOrder extends BaseEntity {
         //订单已关闭 (订单未支付且未关闭 并且 订单已经达到了超时时间)
         return (orderState == TradeOrderState.CLOSED && closeType == TradeOrderEvent.TIME_OUT.name())
                 || (orderState == TradeOrderState.CONFIRM && this.getGmtCreate().compareTo(DateUtils.addMinutes(new Date(), -TradeOrder.DEFAULT_TIME_OUT_MINUTES)) < 0);
+    }
+
+    @JSONField(serialize = false)
+    public Boolean isClosed() {
+        return orderState == TradeOrderState.CLOSED;
+    }
+
+    @JSONField(serialize = false)
+    public Date getPayExpireTime() {
+        return DateUtils.addMinutes(this.getGmtCreate(), TradeOrder.DEFAULT_TIME_OUT_MINUTES);
+    }
+
+    public static TradeOrder createOrder(OrderCreateRequest request) {
+        TradeOrder tradeOrder = TradeOrderConvertor.INSTANCE.mapToEntity(request);
+        tradeOrder.setReverseBuyerId(StringUtils.reverse(request.getBuyerId()));
+        tradeOrder.setOrderState(TradeOrderState.CREATE);
+        tradeOrder.setPaidAmount(BigDecimal.ZERO);
+        tradeOrder.setOrderId(request.getOrderId());
+
+        return tradeOrder;
     }
 }

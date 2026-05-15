@@ -43,7 +43,7 @@ public class InventoryRequest extends BaseRequest {
     public InventoryRequest(OrderCreateRequest orderCreateRequest) {
         this.goodsId = orderCreateRequest.getGoodsId();
         this.goodsType = orderCreateRequest.getGoodsType();
-        this.identifier = orderCreateRequest.getOrderId();
+        this.identifier = orderCreateRequest.getIdentifier();
         this.inventory = orderCreateRequest.getItemCount();
     }
 }

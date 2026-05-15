@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.order.domain.entity.convertor;
 
+import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import org.mapstruct.Mapper;
@@ -36,4 +37,11 @@ public interface TradeOrderConvertor {
      */
     public List<TradeOrderVO> mapToVo(List<TradeOrder> request);
 
+    /**
+     * 转换实体
+     *
+     * @param request
+     * @return
+     */
+    public TradeOrder mapToEntity(OrderCreateRequest request);
 }

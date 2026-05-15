@@ -10,6 +10,7 @@ import com.beaker.mintcraft.web.util.MultiResultConvertor;
 import com.beaker.mintcraft.web.vo.MultiResult;
 import com.beaker.mintcraft.web.vo.Result;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -42,7 +43,7 @@ public class OrderController {
     }
 
     @PutMapping("/create")
-    public Result<String> create(@RequestBody OrderCreateRequest orderCreateRequest) {
+    public Result<String> create(@Valid @RequestBody OrderCreateRequest orderCreateRequest) {
         OrderResponse orderResponse = orderFacadeService.create(orderCreateRequest);
         return Result.success(orderResponse.getOrderId());
     }

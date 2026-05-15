@@ -15,8 +15,10 @@ import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
+import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.domain.entity.convertor.TradeOrderConvertor;
+import com.beaker.mintcraft.order.domain.service.OrderManageService;
 import com.beaker.mintcraft.order.domain.service.OrderService;
 import com.beaker.mintcraft.order.exception.OrderException;
 import com.beaker.mintcraft.order.validator.OrderCreateValidator;
@@ -38,6 +40,9 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
 
     @Resource
     private OrderService orderService;
+
+    @Resource
+    private OrderManageService orderManageService;
 
     @Resource
     private OrderCreateValidator orderValidatorChain;
@@ -71,6 +76,7 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
     }
 
     @Override
+    @DistributeLock(keyExpression = "#request.identifier", scene = "ORDER_CREATE")
     public OrderResponse create(OrderCreateRequest request) {
         // TODO: 后续补充 sentinel 相关
         // 校验订单创建请求
@@ -86,8 +92,8 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
         SingleResponse<Boolean> decreaseResult = inventoryFacadeService.decrease(inventoryRequest);
 
         if (decreaseResult.getSuccess()) {
-            OrderResponse orderResponse = new OrderResponse();
-            return orderResponse;
+            // 创建订单并异步确认订单
+            return orderManageService.createAndAsyncConfirm(request);
         }
 
         // 扣减库存失败

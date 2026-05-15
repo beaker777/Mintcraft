@@ -1,4 +1,4 @@
--- 幂等校验
+-- 根据 orderId 幂等校验
 if redis.call('hexists', KEYS[2], ARGV[2]) == 1 then
     return redis.error_reply('OPERATION_ALREADY_EXECUTED')
 end
