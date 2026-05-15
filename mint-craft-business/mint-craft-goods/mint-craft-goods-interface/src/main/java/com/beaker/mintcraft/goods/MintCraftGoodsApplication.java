@@ -9,8 +9,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Date 2026/5/10 20:07
  * @Description 商品模块启动类
  */
-@SpringBootApplication(scanBasePackages = {"com.beaker.mintcraft.collection"})
-@EnableDubbo(scanBasePackages = {"com.beaker.mintcraft.collection"})
+@SpringBootApplication(scanBasePackages = {"com.beaker.mintcraft.collection", "com.beaker.mintcraft.goods"})
+@EnableDubbo(scanBasePackages = {"com.beaker.mintcraft.collection", "com.beaker.mintcraft.goods"})
 public class MintCraftGoodsApplication {
 
     public static void main(String[] args) {

@@ -26,4 +26,11 @@ public interface InventoryFacadeService {
      */
     public SingleResponse<Integer> queryInventory(InventoryRequest inventoryRequest);
 
+    /**
+     * 库存扣减
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<Boolean> decrease(InventoryRequest inventoryRequest);
 }

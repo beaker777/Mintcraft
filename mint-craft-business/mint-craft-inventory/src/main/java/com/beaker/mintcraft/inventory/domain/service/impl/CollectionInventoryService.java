@@ -1,4 +1,4 @@
-package com.beaker.mintcraft.inventory.domain.domain.service.impl;
+package com.beaker.mintcraft.inventory.domain.service.impl;
 
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import org.springframework.stereotype.Service;
@@ -13,8 +13,15 @@ public class CollectionInventoryService extends AbstractInventoryServiceImpl {
 
     private static final String INVENTORY_KEY = "clc:inventory:";
 
+    private static final String INVENTORY_STREAM_KEY = "clc:inventory:stream:";
+
     @Override
     public String getCacheKey(InventoryRequest request) {
         return INVENTORY_KEY + request.getGoodsId();
+    }
+
+    @Override
+    protected String getCacheStreamKey(InventoryRequest request) {
+        return INVENTORY_STREAM_KEY + request.getGoodsId();
     }
 }

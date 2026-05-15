@@ -1,7 +1,11 @@
 package com.beaker.mintcraft.order.facade;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
+import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
+import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.api.user.constant.UserType;
@@ -14,11 +18,15 @@ import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.domain.entity.convertor.TradeOrderConvertor;
 import com.beaker.mintcraft.order.domain.service.OrderService;
+import com.beaker.mintcraft.order.exception.OrderException;
+import com.beaker.mintcraft.order.validator.OrderCreateValidator;
 import jakarta.annotation.Resource;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 
 import java.util.List;
+
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.INVENTORY_DECREASE_FAILED;
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.ORDER_CREATE_VALID_FAILED;
 
 /**
  * @Author beaker
@@ -31,8 +39,14 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
     @Resource
     private OrderService orderService;
 
-    @DubboReference
+    @Resource
+    private OrderCreateValidator orderValidatorChain;
+
+    @Resource
     private UserFacadeService userFacadeService;
+
+    @Resource
+    private InventoryFacadeService inventoryFacadeService;
 
     @Override
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId) {
@@ -54,6 +68,30 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
         tradeOrderVOs.forEach(tradeOrderVO -> tradeOrderVO.setSellerName(getSellerName(tradeOrderVO)));
 
         return PageResponse.of(tradeOrderVOs, (int) page.getTotal(), request.getPageSize(), request.getCurrentPage());
+    }
+
+    @Override
+    public OrderResponse create(OrderCreateRequest request) {
+        // TODO: 后续补充 sentinel 相关
+        // 校验订单创建请求
+        try {
+            orderValidatorChain.validate(request);
+        } catch (OrderException e) {
+            return new OrderResponse.OrderResponseBuilder()
+                    .buildFail(ORDER_CREATE_VALID_FAILED.getCode(), e.getErrorCode().getMessage());
+        }
+
+        // 扣减 Redis 藏品库存
+        InventoryRequest inventoryRequest = new InventoryRequest(request);
+        SingleResponse<Boolean> decreaseResult = inventoryFacadeService.decrease(inventoryRequest);
+
+        if (decreaseResult.getSuccess()) {
+            OrderResponse orderResponse = new OrderResponse();
+            return orderResponse;
+        }
+
+        // 扣减库存失败
+        throw new OrderException(INVENTORY_DECREASE_FAILED);
     }
 
     private String getSellerName(TradeOrderVO tradeOrderVO) {

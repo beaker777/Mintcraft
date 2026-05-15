@@ -1,15 +1,13 @@
-package com.beaker.mintcraft.inventory.domain.facade;
+package com.beaker.mintcraft.inventory.facade;
 
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.response.InventoryResponse;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.base.response.SingleResponse;
-import com.beaker.mintcraft.inventory.domain.domain.service.impl.CollectionInventoryService;
+import com.beaker.mintcraft.inventory.domain.service.impl.CollectionInventoryService;
 import jakarta.annotation.Resource;
 import org.apache.dubbo.config.annotation.DubboService;
-
-import static com.beaker.mintcraft.api.goods.constant.GoodsType.COLLECTION;
 
 /**
  * @Author beaker
@@ -54,4 +52,22 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
 
         return SingleResponse.of(inventory);
     }
+
+    @Override
+    public SingleResponse<Boolean> decrease(InventoryRequest inventoryRequest) {
+        GoodsType goodsType = inventoryRequest.getGoodsType();
+
+        // TODO: 这里要添加一个是否售罄的缓存池
+
+        InventoryResponse inventoryResponse = switch (goodsType) {
+            case COLLECTION -> collectionInventoryService.decrease(inventoryRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
+
+        if (!inventoryResponse.getSuccess()) {
+            return SingleResponse.fail(inventoryResponse.getResponseCode(), inventoryResponse.getResponseMessage());
+        }
+        return SingleResponse.of(true);
+    }
+
 }

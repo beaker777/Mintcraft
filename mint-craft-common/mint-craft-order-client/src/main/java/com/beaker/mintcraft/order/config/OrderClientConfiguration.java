@@ -25,23 +25,12 @@ public class OrderClientConfiguration {
         return new WorkerIdHolder(redisson);
     }
 
-    /**
-     *
-     * @param userFacadeService
-     * @return
-     */
     @Bean
     @Scope(value = BeanDefinition.SCOPE_PROTOTYPE)
     public UserValidator userValidator(UserFacadeService userFacadeService) {
         return new UserValidator(userFacadeService);
     }
 
-    /**
-     * 这里为什么要使用prototype，详见文档：https://thoughts.aliyun.com/workspaces/6655879cf459b7001ba42f1b/docs/68a2e96151b1440001752e4f
-     *
-     * @param goodsFacadeService
-     * @return
-     */
     @Bean
     @Scope(value = BeanDefinition.SCOPE_PROTOTYPE)
     public GoodsValidator goodsValidator(GoodsFacadeService goodsFacadeService) {

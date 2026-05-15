@@ -1,4 +1,4 @@
-package com.beaker.mintcraft.inventory.domain.domain.service;
+package com.beaker.mintcraft.inventory.domain.service;
 
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.response.InventoryResponse;
@@ -28,4 +28,12 @@ public interface InventoryService {
      * @return
      */
     public Integer getInventory(InventoryRequest request);
+
+    /**
+     * 扣减藏品库存
+     *
+     * @param request
+     * @return
+     */
+    public InventoryResponse decrease(InventoryRequest request);
 }

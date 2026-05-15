@@ -1,4 +1,4 @@
-package com.beaker.mintcraft.collection.infrastructure.es.mapper;
+package com.beaker.mintcraft.collection.infrastructure.mapper.es;
 
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import org.dromara.easyes.core.kernel.BaseEsMapper;

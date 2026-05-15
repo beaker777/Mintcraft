@@ -7,12 +7,15 @@ import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.goods.valobj.BaseGoodsVO;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import jakarta.annotation.Resource;
+import org.apache.dubbo.config.annotation.DubboReference;
+import org.apache.dubbo.config.annotation.DubboService;
 
 /**
  * @Author beaker
  * @Date 2026/5/15 13:14
  * @Description 商品 facade 层实现类
  */
+@DubboService
 public class GoodsFacadeServiceImpl implements GoodsFacadeService {
 
     @Resource
