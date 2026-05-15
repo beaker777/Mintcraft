@@ -39,4 +39,11 @@ public interface OrderMapper extends BaseMapper<TradeOrder> {
      */
     TradeOrder selectByIdentifier(@NotNull String identifier, @NotNull String buyerId);
 
+    /**
+     * 更新订单
+     *
+     * @param tradeOrder
+     * @return
+     */
+    int updateByOrderId(TradeOrder tradeOrder);
 }

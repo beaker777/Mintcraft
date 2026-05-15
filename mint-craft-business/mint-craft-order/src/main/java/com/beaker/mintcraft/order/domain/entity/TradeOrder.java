@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
+import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.pay.constant.PayChannel;
 import com.beaker.mintcraft.api.user.constant.UserType;
@@ -177,4 +178,13 @@ public class TradeOrder extends BaseEntity {
 
         return tradeOrder;
     }
+
+    public TradeOrder confirm(OrderConfirmRequest request) {
+        this.setOrderConfirmedTime(request.getOperateTime());
+        // TODO: 这里后期要补充上订单状态机
+        this.setOrderState(TradeOrderState.CONFIRM);
+
+        return this;
+    }
+
 }

@@ -2,7 +2,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.beaker.mintcraft.order.infrastructure.mapper.OrderMapper">
-    <!--  Generate by Octopus Date: 2024-01-19 10:48:24 -->
 
     <resultMap id="tradeOrderMap" type="com.beaker.mintcraft.order.domain.entity.TradeOrder">
         <result property="id" column="ID"/>
@@ -46,5 +45,39 @@
     <select id="selectByIdentifier" resultMap="tradeOrderMap">
         SELECT * FROM `trade_order` where deleted = 0 AND identifier = #{identifier} AND buyer_id = #{buyerId}
     </select>
+
+    <update id="updateByOrderId" parameterType="com.beaker.mintcraft.order.domain.entity.TradeOrder">
+        update trade_order set gmt_modified = now(), lock_version = lock_version + 1
+
+        <if test="orderState != null">
+            , order_state = #{orderState}
+        </if>
+        <if test="paidAmount != null">
+            , paid_amount = #{paidAmount}
+        </if>
+        <if test="orderFinishedTime != null">
+            , order_finished_time = #{orderFinishedTime}
+        </if>
+        <if test="paySucceedTime != null">
+            , pay_succeed_time = #{paySucceedTime}
+        </if>
+        <if test="orderConfirmedTime != null">
+            , order_confirmed_time = #{orderConfirmedTime}
+        </if>
+        <if test="orderClosedTime != null">
+            , order_closed_time = #{orderClosedTime}
+        </if>
+        <if test="payChannel != null">
+            , pay_channel = #{payChannel}
+        </if>
+        <if test="payStreamId != null">
+            , pay_stream_id = #{payStreamId}
+        </if>
+        <if test="closeType != null">
+            , close_type = #{closeType}
+        </if>
+
+        where order_id = #{orderId} and deleted = 0 and lock_version = #{lockVersion}
+    </update>
 
 </mapper>

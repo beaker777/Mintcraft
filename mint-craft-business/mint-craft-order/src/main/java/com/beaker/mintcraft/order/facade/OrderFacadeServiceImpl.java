@@ -1,8 +1,10 @@
 package com.beaker.mintcraft.order.facade;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
@@ -98,6 +100,20 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
 
         // 扣减库存失败
         throw new OrderException(INVENTORY_DECREASE_FAILED);
+    }
+
+    @Override
+    public OrderResponse confirm(OrderConfirmRequest request) {
+        GoodsSaleRequest goodsSaleRequest = new GoodsSaleRequest();
+        goodsSaleRequest.setUserId(request.getBuyerId());
+        goodsSaleRequest.setGoodsId(Long.valueOf(request.getGoodsId()));
+        goodsSaleRequest.setGoodsType(request.getGoodsType().name());
+        goodsSaleRequest.setIdentifier(request.getOrderId());
+        goodsSaleRequest.setQuantity(request.getItemCount());
+
+        // TODO: 这里后续要去扣减藏品数据库库存
+
+        return orderManageService.confirm(request);
     }
 
     private String getSellerName(TradeOrderVO tradeOrderVO) {

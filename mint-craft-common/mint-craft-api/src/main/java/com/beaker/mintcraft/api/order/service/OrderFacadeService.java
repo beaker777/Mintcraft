@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.api.order.service;
 
+import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
@@ -46,5 +47,13 @@ public interface OrderFacadeService {
      * @return
      */
     public OrderResponse create(OrderCreateRequest request);
+
+    /**
+     * 订单确认
+     *
+     * @param request
+     * @return
+     */
+    public OrderResponse confirm(OrderConfirmRequest request);
 
 }
