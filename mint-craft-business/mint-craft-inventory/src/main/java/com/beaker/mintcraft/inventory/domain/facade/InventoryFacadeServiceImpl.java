@@ -29,6 +29,7 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     public SingleResponse<Boolean> init(InventoryRequest inventoryRequest) {
         GoodsType goodsType = inventoryRequest.getGoodsType();
 
+        // TODO : 后续补充盲盒库存查询
         InventoryResponse inventoryResponse = switch (goodsType) {
             case COLLECTION -> collectionInventoryService.init(inventoryRequest);
             default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
