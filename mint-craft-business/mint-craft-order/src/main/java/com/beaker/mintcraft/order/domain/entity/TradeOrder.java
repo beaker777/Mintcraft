@@ -11,6 +11,7 @@ import com.beaker.mintcraft.api.pay.constant.PayChannel;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
 import com.beaker.mintcraft.order.domain.entity.convertor.TradeOrderConvertor;
+import com.beaker.mintcraft.order.domain.entity.statemachine.OrderStateMachine;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -181,8 +182,9 @@ public class TradeOrder extends BaseEntity {
 
     public TradeOrder confirm(OrderConfirmRequest request) {
         this.setOrderConfirmedTime(request.getOperateTime());
-        // TODO: 这里后期要补充上订单状态机
-        this.setOrderState(TradeOrderState.CONFIRM);
+
+        TradeOrderState state = OrderStateMachine.INSTANCE.transition(getOrderState(), request.getOrderEvent());
+        this.setOrderState(state);
 
         return this;
     }
