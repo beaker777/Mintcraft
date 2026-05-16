@@ -29,6 +29,7 @@
         <module>mint-craft-limiter</module>
         <module>mint-craft-es</module>
         <module>mint-craft-order-client</module>
+        <module>mint-craft-mq</module>
     </modules>
 
     <properties>

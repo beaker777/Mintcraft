@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    stream:
+      rocketmq:
+        binder:
+          name-server: ${mintcraft.rocketmq.url}
+rocketmq:
+  name-server: ${mintcraft.rocketmq.url}
+  broker:
+    check: false
