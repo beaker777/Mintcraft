@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.beaker.mintcraft.collection.infrastructure.mapper.CollectionMapper">
+
+    <resultMap id="resultCollectionMap" type="com.beaker.mintcraft.collection.domain.entity.Collection">
+        <result property="id" column="ID"/>
+        <result property="gmtCreate" column="GMT_CREATE"/>
+        <result property="gmtModified" column="GMT_MODIFIED"/>
+        <result property="name" column="NAME"/>
+        <result property="cover" column="COVER"/>
+        <result property="classId" column="CLASS_ID"/>
+        <result property="price" column="PRICE"/>
+        <result property="quantity" column="QUANTITY"/>
+        <result property="detail" column="DETAIL"/>
+        <result property="saleableInventory" column="SALEABLE_INVENTORY"/>
+        <result property="frozenInventory" column="FROZEN_INVENTORY"/>
+        <result property="state" column="STATE"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="saleTime" column="SALE_TIME"/>
+        <result property="syncChainTime" column="SYNC_CHAIN_TIME"/>
+        <result property="canBook" column="CAN_BOOK"/>
+        <result property="bookStartTime" column="BOOK_START_TIME"/>
+        <result property="bookEndTime" column="BOOK_END_TIME"/>
+        <result property="deleted" column="DELETED"/>
+        <result property="lockVersion" column="LOCK_VERSION"/>
+    </resultMap>
+
+    <!--  库存扣减  -->
+    <update id="sale">
+        UPDATE collection
+        SET saleable_inventory = saleable_inventory - #{quantity}, lock_version = lock_version + 1, gmt_modified = now()
+        WHERE id = #{id} and <![CDATA[saleable_inventory - frozen_inventory >= #{quantity}]]>
+    </update>
+
+</mapper>

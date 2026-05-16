@@ -11,4 +11,13 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CollectionMapper extends BaseMapper<Collection> {
+
+    /**
+     * 库存扣减
+     *
+     * @param id
+     * @param quantity
+     * @return
+     */
+    int sale(Long id, Integer quantity);
 }

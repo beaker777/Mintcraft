@@ -1,8 +1,11 @@
 package com.beaker.mintcraft.api.goods.request;
 
 import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -11,7 +14,9 @@ import java.math.BigDecimal;
  * @Description 商品销售请求
  */
 @Data
-public class GoodsSaleRequest extends BaseGoodsRequest {
+@AllArgsConstructor
+@NoArgsConstructor
+public class GoodsSaleRequest extends BaseGoodsRequest implements Serializable {
 
     /**
      * 藏品名称

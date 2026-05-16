@@ -1,6 +1,8 @@
 package com.beaker.mintcraft.api.goods.service;
 
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
+import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
+import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
 import com.beaker.mintcraft.api.goods.valobj.BaseGoodsVO;
 
 /**
@@ -19,4 +21,11 @@ public interface GoodsFacadeService {
      */
     public BaseGoodsVO getGoods(String goodsId, GoodsType goodsType);
 
+    /**
+     * 藏品出售的try阶段，做库存占用
+     *
+     * @param request
+     * @return
+     */
+    public GoodsSaleResponse sale(GoodsSaleRequest request);
 }

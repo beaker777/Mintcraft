@@ -25,7 +25,7 @@ import static com.beaker.mintcraft.collection.infrastructure.exception.Collectio
 /**
  * @Author beaker
  * @Date 2026/5/10 18:29
- * @Description 藏品 service 层实现
+ * @Description 藏品 facade 层实现, 只提供读服务
  */
 @DubboService
 public class CollectionFacadeServiceImpl implements CollectionFacadeService {

@@ -43,8 +43,8 @@ public class OrderController {
     }
 
     @PutMapping("/create")
-    public Result<String> create(@Valid @RequestBody OrderCreateRequest orderCreateRequest) {
+    public Result<OrderResponse> create(@Valid @RequestBody OrderCreateRequest orderCreateRequest) {
         OrderResponse orderResponse = orderFacadeService.create(orderCreateRequest);
-        return Result.success(orderResponse.getOrderId());
+        return Result.success(orderResponse);
     }
 }

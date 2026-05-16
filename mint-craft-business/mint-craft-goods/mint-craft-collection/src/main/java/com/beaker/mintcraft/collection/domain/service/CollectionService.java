@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.collection.domain.service;
 
+import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 
@@ -28,4 +29,13 @@ public interface CollectionService {
      * @return
      */
     public PageResponse<Collection> pageQueryByState(String keyWord, String state, int currentPage, int pageSize);
+
+    /**
+     * 售卖
+     *
+     * @param request
+     * @return
+     */
+    public Boolean sale(GoodsTrySaleRequest request);
+
 }

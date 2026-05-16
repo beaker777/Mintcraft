@@ -2,6 +2,8 @@ package com.beaker.mintcraft.order.facade;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
+import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
+import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
@@ -55,6 +57,9 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
     @Resource
     private InventoryFacadeService inventoryFacadeService;
 
+    @Resource
+    private GoodsFacadeService goodsFacadeService;
+
     @Override
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId) {
         return SingleResponse.of(TradeOrderConvertor.INSTANCE.mapToVo(orderService.getOrder(orderId)));
@@ -104,16 +109,23 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
 
     @Override
     public OrderResponse confirm(OrderConfirmRequest request) {
+        // 扣减数据库藏品库存
         GoodsSaleRequest goodsSaleRequest = new GoodsSaleRequest();
         goodsSaleRequest.setUserId(request.getBuyerId());
         goodsSaleRequest.setGoodsId(Long.valueOf(request.getGoodsId()));
         goodsSaleRequest.setGoodsType(request.getGoodsType().name());
         goodsSaleRequest.setIdentifier(request.getOrderId());
         goodsSaleRequest.setQuantity(request.getItemCount());
+        GoodsSaleResponse response = goodsFacadeService.sale(goodsSaleRequest);
 
-        // TODO: 这里后续要去扣减藏品数据库库存
+        if (response.getSuccess()) {
+            // 确认订单
+            return orderManageService.confirm(request);
+        }
 
-        return orderManageService.confirm(request);
+        // 确认订单失败
+        return new OrderResponse.OrderResponseBuilder().orderId(request.getOrderId())
+                .buildFail(response.getResponseCode(), response.getResponseMessage());
     }
 
     private String getSellerName(TradeOrderVO tradeOrderVO) {
