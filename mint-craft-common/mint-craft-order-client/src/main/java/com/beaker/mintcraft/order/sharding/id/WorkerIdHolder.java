@@ -17,7 +17,7 @@ public class WorkerIdHolder implements CommandLineRunner {
     @Value("${order.client.name:workerId}")
     private String clientName;
 
-    private static Long WORKER_ID;
+    public static Long WORKER_ID;
 
     public WorkerIdHolder(RedissonClient redissonClient) {
         this.redissonClient = redissonClient;
