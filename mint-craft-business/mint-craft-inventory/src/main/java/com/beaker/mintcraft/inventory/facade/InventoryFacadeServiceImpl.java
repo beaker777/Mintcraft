@@ -1,12 +1,17 @@
 package com.beaker.mintcraft.inventory.facade;
 
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
+import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
+import com.beaker.mintcraft.api.goods.valobj.GoodsStreamVO;
+import com.beaker.mintcraft.api.inventory.request.InventoryCheckRequest;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
+import com.beaker.mintcraft.api.inventory.response.InventoryCheckResponse;
 import com.beaker.mintcraft.api.inventory.response.InventoryResponse;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.inventory.domain.service.impl.CollectionInventoryService;
 import jakarta.annotation.Resource;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 
 /**
@@ -19,6 +24,9 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
 
     @Resource
     private CollectionInventoryService collectionInventoryService;
+
+    @DubboReference
+    private GoodsFacadeService goodsFacadeService;
 
     private static final String ERROR_CODE_UNSUPPORTED_GOODS_TYPE = "UNSUPPORTED_GOODS_TYPE";
 
@@ -70,4 +78,20 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
         return SingleResponse.of(true);
     }
 
+    @Override
+    public InventoryCheckResponse check(InventoryCheckRequest request) {
+        InventoryCheckResponse inventoryCheckResponse = new InventoryCheckResponse();
+
+        boolean checkResult;
+        GoodsStreamVO goodsStreamVO = goodsFacadeService.getGoodsInventoryStream(request.getGoodsId(), request.getGoodsType(), request.getGoodsEvent(), request.getIdentifier());
+        // 判断扣减库存流水是否存在, 若存在则判断流水扣减库存与请求扣减库存是否一致
+        if (goodsStreamVO == null) {
+            checkResult = false;
+        }
+        checkResult = goodsStreamVO.getChangedQuantity().equals(request.getChangedQuantity());
+
+        inventoryCheckResponse.setSuccess(true);
+        inventoryCheckResponse.setCheckResult(checkResult);
+        return inventoryCheckResponse;
+    }
 }

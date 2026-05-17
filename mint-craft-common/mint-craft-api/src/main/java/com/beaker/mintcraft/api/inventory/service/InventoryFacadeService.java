@@ -1,6 +1,8 @@
 package com.beaker.mintcraft.api.inventory.service;
 
+import com.beaker.mintcraft.api.inventory.request.InventoryCheckRequest;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
+import com.beaker.mintcraft.api.inventory.response.InventoryCheckResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 
 /**
@@ -33,4 +35,12 @@ public interface InventoryFacadeService {
      * @return
      */
     public SingleResponse<Boolean> decrease(InventoryRequest inventoryRequest);
+
+    /**
+     * 库存核对
+     *
+     * @param request
+     * @return
+     */
+    public InventoryCheckResponse check(InventoryCheckRequest request);
 }

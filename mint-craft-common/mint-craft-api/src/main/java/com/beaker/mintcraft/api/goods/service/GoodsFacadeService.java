@@ -1,9 +1,11 @@
 package com.beaker.mintcraft.api.goods.service;
 
+import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
 import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
 import com.beaker.mintcraft.api.goods.valobj.BaseGoodsVO;
+import com.beaker.mintcraft.api.goods.valobj.GoodsStreamVO;
 
 /**
  * @Author beaker
@@ -28,4 +30,15 @@ public interface GoodsFacadeService {
      * @return
      */
     public GoodsSaleResponse sale(GoodsSaleRequest request);
+
+    /**
+     * 获取商品流水
+     *
+     * @param goodsId
+     * @param goodsType
+     * @param goodsEvent
+     * @param identifier
+     * @return
+     */
+    public GoodsStreamVO getGoodsInventoryStream(String goodsId, GoodsType goodsType, GoodsEvent goodsEvent, String identifier);
 }

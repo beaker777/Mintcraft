@@ -1,17 +1,21 @@
-package com.beaker.mintcraft.goods.domain.service;
+package com.beaker.mintcraft.goods.facade;
 
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
+import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
 import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.goods.valobj.BaseGoodsVO;
+import com.beaker.mintcraft.api.goods.valobj.GoodsStreamVO;
 import com.beaker.mintcraft.base.response.SingleResponse;
+import com.beaker.mintcraft.collection.domain.entity.CollectionInventoryStream;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
+import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionInventoryStreamMapper;
+import com.beaker.mintcraft.goods.domain.entity.convertor.GoodsStreamConvertor;
 import jakarta.annotation.Resource;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 
 /**
@@ -24,6 +28,9 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
 
     @Resource
     private CollectionService collectionService;
+
+    @Resource
+    private CollectionInventoryStreamMapper collectionInventoryStreamMapper;
 
     @Resource
     private CollectionFacadeService collectionFacadeService;
@@ -60,5 +67,18 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
 
         response.setSuccess(trySaleResult);
         return response;
+    }
+
+    @Override
+    public GoodsStreamVO getGoodsInventoryStream(String goodsId, GoodsType goodsType, GoodsEvent goodsEvent, String identifier) {
+        return switch (goodsType) {
+            case COLLECTION -> {
+                CollectionInventoryStream collectionInventoryStream = collectionInventoryStreamMapper
+                        .selectByIdentifier(identifier, goodsType.name(), Long.valueOf(goodsId));
+
+                yield GoodsStreamConvertor.INSTANCE.mapToVo(collectionInventoryStream);
+            }
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
     }
 }
