@@ -156,9 +156,9 @@ public class TradeController {
                 InventoryCheckResponse checkResponse = inventoryFacadeService.check(inventoryCheckRequest);
                 // 核验成功
                 if (checkResponse.getSuccess() && checkResponse.getCheckResult()) {
-                    // TODO: 删除库存扣减流水记录
+                    // 删除库存扣减流水记录
+                    inventoryFacadeService.removeInventoryDecreaseLog(inventoryRequest);
                 }
-
             }, 3, TimeUnit.SECONDS);
         } catch (Exception e) {
             // 打印失败日志, 不影响主流程, 等待异步任务核对

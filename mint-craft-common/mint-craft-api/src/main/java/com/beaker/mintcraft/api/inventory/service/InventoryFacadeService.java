@@ -43,4 +43,13 @@ public interface InventoryFacadeService {
      * @return
      */
     public InventoryCheckResponse check(InventoryCheckRequest request);
+
+    /**
+     * 移除流水
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<Long> removeInventoryDecreaseLog(InventoryRequest inventoryRequest);
+
 }

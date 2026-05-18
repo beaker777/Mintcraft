@@ -123,6 +123,21 @@ public abstract class AbstractInventoryServiceImpl implements InventoryService {
         }
     }
 
+    @Override
+    public Long removeInventoryDecreaseLog(InventoryRequest request) {
+        String luaScript = """
+                local jsonString = redis.call('hdel', KEYS[1], ARGV[1])
+                return jsonString
+                """;
+
+        return redissonClient.getScript().eval(
+                RScript.Mode.READ_WRITE,
+                luaScript,
+                RScript.ReturnType.INTEGER,
+                Arrays.asList(getCacheStreamKey(request)),
+                "DECREASE_" + request.getIdentifier());
+    }
+
     /**
      * 获取库存缓存的 key
      *

@@ -36,4 +36,11 @@ public interface InventoryService {
      * @return
      */
     public InventoryResponse decrease(InventoryRequest request);
+
+    /**
+     * 移除库存操作日志
+     * @param request
+     * @return
+     */
+    public Long removeInventoryDecreaseLog(InventoryRequest request);
 }

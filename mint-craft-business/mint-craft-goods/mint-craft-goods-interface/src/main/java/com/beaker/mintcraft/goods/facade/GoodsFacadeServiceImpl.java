@@ -74,7 +74,7 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
         return switch (goodsType) {
             case COLLECTION -> {
                 CollectionInventoryStream collectionInventoryStream = collectionInventoryStreamMapper
-                        .selectByIdentifier(identifier, goodsType.name(), Long.valueOf(goodsId));
+                        .selectByIdentifier(identifier, goodsEvent.name(), Long.valueOf(goodsId));
 
                 yield GoodsStreamConvertor.INSTANCE.mapToVo(collectionInventoryStream);
             }

@@ -79,6 +79,18 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     }
 
     @Override
+    public SingleResponse<Long> removeInventoryDecreaseLog(InventoryRequest inventoryRequest) {
+        GoodsType goodsType = inventoryRequest.getGoodsType();
+
+        Long inventoryResponse = switch (goodsType) {
+            case COLLECTION -> collectionInventoryService.removeInventoryDecreaseLog(inventoryRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
+
+        return SingleResponse.of(inventoryResponse);
+    }
+
+    @Override
     public InventoryCheckResponse check(InventoryCheckRequest request) {
         InventoryCheckResponse inventoryCheckResponse = new InventoryCheckResponse();
 
