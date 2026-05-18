@@ -40,6 +40,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode.ORDER_CREATE_FAILED;
+import static com.beaker.mintcraft.web.filter.TokenFilter.TOKEN_THREAD_LOCAL;
 
 /**
  * @Author beaker
@@ -112,8 +113,7 @@ public class TradeController {
         // 创建订单
         OrderCreateRequest orderCreateRequest = new OrderCreateRequest();
         orderCreateRequest.setOrderId(orderId);
-        // TODO: 这里后续要使用 token
-        orderCreateRequest.setIdentifier(orderId);
+        orderCreateRequest.setIdentifier(TOKEN_THREAD_LOCAL.get());
         orderCreateRequest.setBuyerId(userId);
         orderCreateRequest.setGoodsId(buyParam.getGoodsId());
         orderCreateRequest.setGoodsType(GoodsType.valueOf(buyParam.getGoodsType()));
