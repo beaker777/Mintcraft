@@ -5,7 +5,7 @@ import com.beaker.mintcraft.base.exception.ErrorCode;
 /**
  * @Author beaker
  * @Date 2026/5/7 15:48
- * @Description TODO
+ * @Description MySQL 操作异常码
  */
 public enum RepoErrorCode implements ErrorCode {
 

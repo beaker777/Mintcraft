@@ -10,15 +10,26 @@ import com.beaker.mintcraft.api.inventory.response.InventoryResponse;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.inventory.domain.service.impl.CollectionInventoryService;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
+
+import java.util.concurrent.TimeUnit;
+
+import static com.beaker.mintcraft.api.common.constant.CommonConstant.SEPARATOR;
+import static com.beaker.mintcraft.inventory.domain.service.impl.AbstractInventoryServiceImpl.ERROR_CODE_INVENTORY_IS_ZERO;
+import static com.beaker.mintcraft.inventory.domain.service.impl.AbstractInventoryServiceImpl.ERROR_CODE_INVENTORY_NOT_ENOUGH;
 
 /**
  * @Author beaker
  * @Date 2026/5/10 21:08
  * @Description 库存 facade 层接口实现类
  */
+@Slf4j
 @DubboService
 public class InventoryFacadeServiceImpl implements InventoryFacadeService {
 
@@ -28,8 +39,17 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     @DubboReference
     private GoodsFacadeService goodsFacadeService;
 
+    private Cache<String, Boolean> soldOutGoodsLocalCache;
+
     private static final String ERROR_CODE_UNSUPPORTED_GOODS_TYPE = "UNSUPPORTED_GOODS_TYPE";
 
+    @PostConstruct
+    public void init() {
+        soldOutGoodsLocalCache = Caffeine.newBuilder()
+                .expireAfterWrite(1, TimeUnit.MINUTES)
+                .maximumSize(3000)
+                .build();
+    }
 
     @Override
     public SingleResponse<Boolean> init(InventoryRequest inventoryRequest) {
@@ -51,7 +71,10 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     public SingleResponse<Integer> queryInventory(InventoryRequest inventoryRequest) {
         GoodsType goodsType = inventoryRequest.getGoodsType();
 
-        // TODO: 这里要添加一个是否售罄的缓存池
+        // 如果商品在缓存池中直接返回
+        if (soldOutGoodsLocalCache.getIfPresent(goodsType + SEPARATOR + inventoryRequest.getGoodsId()) != null) {
+            return SingleResponse.of(0);
+        }
 
         Integer inventory = switch (goodsType) {
             case COLLECTION -> collectionInventoryService.getInventory(inventoryRequest);
@@ -65,12 +88,21 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     public SingleResponse<Boolean> decrease(InventoryRequest inventoryRequest) {
         GoodsType goodsType = inventoryRequest.getGoodsType();
 
-        // TODO: 这里要添加一个是否售罄的缓存池
+        // 如果商品在缓存池中说明库存不足
+        if (soldOutGoodsLocalCache.getIfPresent(goodsType + SEPARATOR + inventoryRequest.getGoodsId()) != null) {
+            return SingleResponse.fail(ERROR_CODE_INVENTORY_NOT_ENOUGH, "库存不足");
+        }
 
         InventoryResponse inventoryResponse = switch (goodsType) {
             case COLLECTION -> collectionInventoryService.decrease(inventoryRequest);
             default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
         };
+
+        // 若扣减成功, 且扣减后库存为 0, 加入缓存
+        // 若由于库存已经为 0 扣减失败, 加入缓存
+        if (isSoldOut(inventoryResponse)) {
+            soldOutGoodsLocalCache.put(goodsType + SEPARATOR + inventoryRequest.getGoodsId(), true);
+        }
 
         if (!inventoryResponse.getSuccess()) {
             return SingleResponse.fail(inventoryResponse.getResponseCode(), inventoryResponse.getResponseMessage());
@@ -107,4 +139,14 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
         inventoryCheckResponse.setCheckResult(checkResult);
         return inventoryCheckResponse;
     }
+
+    private static boolean isSoldOut(InventoryResponse inventoryResponse) {
+        if (inventoryResponse.getSuccess() && inventoryResponse.getInventory() == 0) {
+            //这部分代码没有实际功能作用，仅用于日志埋点，方便压测时判断延时，详见压测相关视频
+            log.warn("debug:soldOut ...");
+        }
+        return inventoryResponse.getSuccess() && inventoryResponse.getInventory() == 0
+                || !inventoryResponse.getSuccess() && inventoryResponse.getResponseCode().equals(ERROR_CODE_INVENTORY_IS_ZERO);
+    }
+
 }

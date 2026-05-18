@@ -31,7 +31,7 @@ public class OrderEventListener {
         confirmRequest.setOperator(UserType.PLATFORM.name());
         confirmRequest.setOperatorType(UserType.PLATFORM);
         confirmRequest.setOrderId(tradeOrder.getOrderId());
-        confirmRequest.setIdentifier(tradeOrder.getIdentifier());
+        confirmRequest.setIdentifier(tradeOrder.getOrderId());
         confirmRequest.setOperateTime(new Date());
         confirmRequest.setBuyerId(tradeOrder.getBuyerId());
         confirmRequest.setItemCount(tradeOrder.getItemCount());

@@ -6,7 +6,7 @@ import com.beaker.mintcraft.base.exception.biz.BizException;
 /**
  * @Author beaker
  * @Date 2026/5/10 19:40
- * @Description TODO
+ * @Description 藏品异常
  */
 public class CollectionException extends BizException {
 
