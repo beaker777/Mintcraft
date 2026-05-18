@@ -87,8 +87,9 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
         // 判断扣减库存流水是否存在, 若存在则判断流水扣减库存与请求扣减库存是否一致
         if (goodsStreamVO == null) {
             checkResult = false;
+        } else {
+            checkResult = goodsStreamVO.getChangedQuantity().equals(request.getChangedQuantity());
         }
-        checkResult = goodsStreamVO.getChangedQuantity().equals(request.getChangedQuantity());
 
         inventoryCheckResponse.setSuccess(true);
         inventoryCheckResponse.setCheckResult(checkResult);

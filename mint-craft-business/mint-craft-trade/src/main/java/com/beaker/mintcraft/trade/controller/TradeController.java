@@ -48,7 +48,7 @@ import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode
  */
 @Slf4j
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/trade")
 public class TradeController {
 
     private static ThreadFactory inventoryByPassVerifyThreadFactory = new ThreadFactoryBuilder()
@@ -126,7 +126,7 @@ public class TradeController {
         }
         orderCreateRequest.setItemPrice(goodsVO.getPrice());
         orderCreateRequest.setSellerId(goodsVO.getSellerId());
-        orderCreateRequest.setSellerId(goodsVO.getGoodsName());
+        orderCreateRequest.setGoodsName(goodsVO.getGoodsName());
         orderCreateRequest.setGoodsPicUrl(goodsVO.getGoodsPicUrl());
         orderCreateRequest.setSnapshotVersion(goodsVO.getVersion());
 

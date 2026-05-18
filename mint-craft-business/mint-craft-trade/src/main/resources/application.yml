@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: mint-craft-trade
+  config:
+    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml
+
+server:
+  port: 8084
+
+#dubbo:
+#  # 关闭启动时检查
+#  consumer:
+#    check: false
+#  application:
+#    name: nft-turbo-trade
