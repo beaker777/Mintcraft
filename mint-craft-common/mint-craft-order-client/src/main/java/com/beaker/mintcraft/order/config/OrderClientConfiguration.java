@@ -43,4 +43,11 @@ public class OrderClientConfiguration {
 
         return userValidator;
     }
+
+    @Bean
+    public OrderCreateValidator orderConfirmValidatorChain(UserValidator userValidator, GoodsValidator goodsValidator) {
+        userValidator.setNext(goodsValidator);
+
+        return userValidator;
+    }
 }

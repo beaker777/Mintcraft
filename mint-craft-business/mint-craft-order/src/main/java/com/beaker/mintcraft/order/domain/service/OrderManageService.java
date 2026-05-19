@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.exception.OrderErrorCode;
 import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
+import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
@@ -21,10 +22,12 @@ import com.beaker.mintcraft.order.infrastructure.mapper.OrderMapper;
 import com.beaker.mintcraft.order.infrastructure.mapper.OrderStreamMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -53,6 +56,9 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     /**
      * 订单创建并异步确认
      *
@@ -76,8 +82,42 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
         return new OrderResponse.OrderResponseBuilder().orderId(tradeOrder.getOrderId()).buildSuccess();
     }
 
+    /**
+     * 订单确认
+     *
+     * @param request
+     * @return
+     */
     public OrderResponse confirm(OrderConfirmRequest request) {
         return doExecute(request, tradeOrder -> tradeOrder.confirm(request));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public OrderResponse createAndConfirm(OrderCreateAndConfirmRequest request) {
+        // 幂等校验
+        TradeOrder existOrder = orderMapper.selectByIdentifier(request.getIdentifier(), request.getBuyerId());
+        if (existOrder != null) {
+            return new OrderResponse.OrderResponseBuilder().orderId(existOrder.getOrderId()).buildSuccess();
+        }
+
+        // 创建订单
+        TradeOrder tradeOrder = TradeOrder.createOrder(request);
+
+        // 确认订单
+        OrderConfirmRequest confirmRequest = new OrderConfirmRequest();
+        BeanUtils.copyProperties(request, confirmRequest);
+        tradeOrder.confirm(confirmRequest);
+
+        // 将确认后的订单存入数据库
+        boolean result = save(tradeOrder);
+        Assert.isTrue(result, () -> new BizException(RepoErrorCode.INSERT_FAILED));
+
+        // 写入流水
+        TradeOrderStream orderStream = new TradeOrderStream(tradeOrder, request.getOrderEvent(), request.getIdentifier());
+        result = orderStreamMapper.insert(orderStream) == 1;
+        Assert.isTrue(result, () -> new BizException(RepoErrorCode.INSERT_FAILED));
+
+        return new OrderResponse.OrderResponseBuilder().orderId(tradeOrder.getOrderId()).buildSuccess();
     }
 
     private TradeOrder doCreate(OrderCreateRequest request) {
@@ -126,17 +166,19 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
             //核心逻辑执行
             consumer.accept(existOrder);
 
-            // 更新修改后的订单
-            boolean result = (orderMapper.updateByOrderId(existOrder) == 1);
-            Assert.isTrue(result, () -> new OrderException(OrderErrorCode.UPDATE_ORDER_FAILED));
+            return transactionTemplate.execute(transactionStatus -> {
+                // 更新修改后的订单
+                boolean result = (orderMapper.updateByOrderId(existOrder) == 1);
+                Assert.isTrue(result, () -> new OrderException(OrderErrorCode.UPDATE_ORDER_FAILED));
 
-            // 写入流水
-            TradeOrderStream orderStream = new TradeOrderStream(existOrder, orderRequest.getOrderEvent(), orderRequest.getIdentifier());
-            result = orderStreamMapper.insert(orderStream) == 1;
-            Assert.isTrue(result, () -> new BizException(RepoErrorCode.INSERT_FAILED));
+                // 写入流水
+                TradeOrderStream orderStream = new TradeOrderStream(existOrder, orderRequest.getOrderEvent(), orderRequest.getIdentifier());
+                result = orderStreamMapper.insert(orderStream) == 1;
+                Assert.isTrue(result, () -> new BizException(RepoErrorCode.INSERT_FAILED));
 
-            return new OrderResponse.OrderResponseBuilder()
-                    .orderId(orderStream.getOrderId()).streamId(String.valueOf(orderStream.getId())).buildSuccess();
+                return new OrderResponse.OrderResponseBuilder()
+                        .orderId(orderStream.getOrderId()).streamId(String.valueOf(orderStream.getId())).buildSuccess();
+            });
         });
     }
 

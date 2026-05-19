@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.order.controller;
 
+import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
@@ -45,6 +46,12 @@ public class OrderController {
     @PutMapping("/create")
     public Result<OrderResponse> create(@Valid @RequestBody OrderCreateRequest orderCreateRequest) {
         OrderResponse orderResponse = orderFacadeService.create(orderCreateRequest);
+        return Result.success(orderResponse);
+    }
+
+    @PutMapping("/createAndConfirm")
+    public Result<OrderResponse> createAndConfirm(@Valid @RequestBody OrderCreateAndConfirmRequest orderCreateAndConfirmRequest) {
+        OrderResponse orderResponse = orderFacadeService.createAndConfirm(orderCreateAndConfirmRequest);
         return Result.success(orderResponse);
     }
 }

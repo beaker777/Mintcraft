@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.trade.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.alibaba.fastjson2.JSON;
 import com.beaker.mintcraft.api.common.constant.BusinessCode;
 import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
@@ -73,6 +74,13 @@ public class TradeController {
     @Autowired
     private StreamProducer streamProducer;
 
+    /**
+     * 下单
+     * 秒杀下单，热点商品
+     *
+     * @param
+     * @return 订单号
+     */
     @PostMapping("/buy")
     public Result<String> buy(@Valid @RequestBody BuyParam buyParam) {
         try {
@@ -97,6 +105,25 @@ public class TradeController {
         }
 
         return Result.error(ORDER_CREATE_FAILED.getCode(), ORDER_CREATE_FAILED.getMessage());
+    }
+
+    @PostMapping("/newBuy")
+    public Result<String> newBuy(@Valid @RequestBody BuyParam buyParam) {
+        try {
+            OrderCreateRequest orderCreateRequest = getOrderCreateRequest(buyParam);
+
+            // 校验订单创建请求
+            orderValidatorChain.validate(orderCreateRequest);
+
+            //
+            boolean result = streamProducer
+                    .send("newBuy-out-0", buyParam.getGoodsType(), JSON.toJSONString(orderCreateRequest));
+
+        } catch (Exception e) {
+
+        }
+
+        return null;
     }
 
     /**

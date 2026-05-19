@@ -7,6 +7,7 @@ import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
+import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
@@ -49,9 +50,6 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
     private OrderManageService orderManageService;
 
     @Resource
-    private OrderCreateValidator orderValidatorChain;
-
-    @Resource
     private UserFacadeService userFacadeService;
 
     @Resource
@@ -59,6 +57,12 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
 
     @Resource
     private GoodsFacadeService goodsFacadeService;
+
+    @Resource
+    private OrderCreateValidator orderValidatorChain;
+
+    @Resource
+    private OrderCreateValidator orderConfirmValidatorChain;
 
     @Override
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId) {
@@ -126,6 +130,30 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
         // 确认订单失败
         return new OrderResponse.OrderResponseBuilder().orderId(request.getOrderId())
                 .buildFail(response.getResponseCode(), response.getResponseMessage());
+    }
+
+    @Override
+    @DistributeLock(keyExpression = "#request.identifier", scene = "ORDER_CREATE")
+    public OrderResponse createAndConfirm(OrderCreateAndConfirmRequest request) {
+        // 校验订单创建请求
+        try {
+            orderConfirmValidatorChain.validate(request);
+        } catch (OrderException e) {
+            return new OrderResponse.OrderResponseBuilder()
+                    .orderId(request.getOrderId())
+                    .buildFail(ORDER_CREATE_VALID_FAILED.getCode(), ORDER_CREATE_VALID_FAILED.getMessage());
+        }
+
+        if (request.isSyncDecreaseInventory()) {
+            GoodsSaleRequest goodsSaleRequest = new GoodsSaleRequest(request);
+            GoodsSaleResponse response = goodsFacadeService.sale(goodsSaleRequest);
+
+            if (!response.getSuccess()) {
+                return new OrderResponse.OrderResponseBuilder().buildFail(response.getResponseCode(), response.getResponseMessage());
+            }
+        }
+
+        return orderManageService.createAndConfirm(request);
     }
 
     private String getSellerName(TradeOrderVO tradeOrderVO) {
