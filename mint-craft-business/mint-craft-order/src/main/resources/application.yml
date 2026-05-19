@@ -4,7 +4,15 @@ spring:
   main:
     allow-bean-definition-overriding: true
   config:
-    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:datasource-sharding.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:datasource-sharding.yml
+    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:datasource-sharding.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:datasource-sharding.yml, optional:classpath:mq.yml
+  cloud:
+    stream:
+      bindings:
+        newBuy-in-0:
+          content-type: application/json
+          destination: new-buy-topic
+          group: trade-group
+          binder: rocketmq
   shardingsphere:
     rules:
       sharding:
@@ -48,3 +56,10 @@ spring:
 
 server:
   port: 9000
+
+rocketmq:
+  consumer:
+    group: trade-group
+    # 一次拉取消息最大值，注意是拉取消息的最大值而非消费最大值
+    pull-batch-size: 64
+    consume-message-batch-max-size: 32

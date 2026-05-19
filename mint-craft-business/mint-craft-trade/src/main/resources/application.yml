@@ -2,7 +2,23 @@ spring:
   application:
     name: mint-craft-trade
   config:
-    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml
+    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:mq.yml
+  cloud:
+    function:
+      definition: newBuy;
+    stream:
+      rocketmq:
+        bindings:
+          newBuy-out-0:
+            producer:
+              producerType: Trans
+              transactionListener: inventoryDecreaseTransactionListener
+      bindings:
+        newBuy-out-0:
+          content-type: application/json
+          destination: new-buy-topic
+          group: trade-group
+          binder: rocketmq
 
 server:
   port: 8084

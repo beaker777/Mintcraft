@@ -14,7 +14,7 @@ import static com.beaker.mintcraft.cache.constant.CacheConstant.CACHE_KEY_SEPARA
  */
 public class TokenUtil {
 
-    private static final String TOKEN_AES_KEY = "token_by_mintcraft_0";
+    private static final String TOKEN_AES_KEY = "token_by_mintcraft_00000";
 
     public static final String TOKEN_PREFIX = "token:";
 

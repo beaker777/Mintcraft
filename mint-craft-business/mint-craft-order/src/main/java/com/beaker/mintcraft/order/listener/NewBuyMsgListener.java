@@ -2,6 +2,7 @@ package com.beaker.mintcraft.order.listener;
 
 import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
+import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.mq.consumer.AbstractStreamConsumer;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.function.Consumer;
+
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.ORDER_CREATE_VALID_FAILED;
 
 /**
  * @Author beaker
@@ -34,6 +37,14 @@ public class NewBuyMsgListener extends AbstractStreamConsumer {
     @Resource
     private OrderFacadeService orderFacadeService;
 
+    @Bean
+    Consumer<Message<MessageBody>> newBuy() {
+        return msg -> {
+            OrderCreateRequest orderCreateRequest = getMessage(msg, OrderCreateRequest.class);
+            doNewBuyExecute(orderCreateRequest);
+        };
+    }
+
     public void doNewBuyExecute(OrderCreateRequest orderCreateRequest) {
         OrderCreateAndConfirmRequest orderCreateAndConfirmRequest = new OrderCreateAndConfirmRequest();
         BeanUtils.copyProperties(orderCreateRequest, orderCreateAndConfirmRequest);
@@ -42,6 +53,9 @@ public class NewBuyMsgListener extends AbstractStreamConsumer {
         orderCreateAndConfirmRequest.setOperateTime(new Date());
         orderCreateAndConfirmRequest.setSyncDecreaseInventory(true);
 
-
+        OrderResponse orderResponse = orderFacadeService.createAndConfirm(orderCreateAndConfirmRequest);
+        if (!orderResponse.getSuccess() && ORDER_CREATE_VALID_FAILED.getCode().equals(orderResponse.getResponseCode())) {
+            // TODO: 订单因为校验不通过导致下单失败, 回滚库存
+        }
     }
 }

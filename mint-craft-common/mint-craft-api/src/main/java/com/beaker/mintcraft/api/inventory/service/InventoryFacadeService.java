@@ -52,4 +52,11 @@ public interface InventoryFacadeService {
      */
     public SingleResponse<Long> removeInventoryDecreaseLog(InventoryRequest inventoryRequest);
 
+    /**
+     * 查询库存扣减流水
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<String> getInventoryDecreaseLog(InventoryRequest inventoryRequest);
 }

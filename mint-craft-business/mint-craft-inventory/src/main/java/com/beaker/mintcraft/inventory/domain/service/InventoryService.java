@@ -43,4 +43,12 @@ public interface InventoryService {
      * @return
      */
     public Long removeInventoryDecreaseLog(InventoryRequest request);
+
+    /**
+     * 获取藏品库存扣减日志
+     *
+     * @param request
+     * @return
+     */
+    public String getInventoryDecreaseLog(InventoryRequest request);
 }

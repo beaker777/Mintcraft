@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.beaker.mintcraft.api.common.constant.CommonConstant.SEPARATOR;
@@ -116,6 +117,18 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
 
         Long inventoryResponse = switch (goodsType) {
             case COLLECTION -> collectionInventoryService.removeInventoryDecreaseLog(inventoryRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
+
+        return SingleResponse.of(inventoryResponse);
+    }
+
+    @Override
+    public SingleResponse<String> getInventoryDecreaseLog(InventoryRequest inventoryRequest) {
+        GoodsType goodsType = inventoryRequest.getGoodsType();
+
+        String inventoryResponse = switch (goodsType) {
+            case COLLECTION -> collectionInventoryService.getInventoryDecreaseLog(inventoryRequest);
             default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
         };
 

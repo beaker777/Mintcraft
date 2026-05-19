@@ -17,6 +17,7 @@ import org.springframework.util.StreamUtils;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.beaker.mintcraft.base.response.ResponseCode.BIZ_ERROR;
 import static com.beaker.mintcraft.base.response.ResponseCode.DUPLICATED;
@@ -134,6 +135,21 @@ public abstract class AbstractInventoryServiceImpl implements InventoryService {
                 RScript.Mode.READ_WRITE,
                 luaScript,
                 RScript.ReturnType.INTEGER,
+                Arrays.asList(getCacheStreamKey(request)),
+                "DECREASE_" + request.getIdentifier());
+    }
+
+    @Override
+    public String getInventoryDecreaseLog(InventoryRequest request) {
+        String luaScript = """
+                local jsonString = redis.call('hget', KEYS[1], ARGV[1])
+                return jsonString
+                """;
+
+        return redissonClient.getScript().eval(
+                RScript.Mode.READ_WRITE,
+                luaScript,
+                RScript.ReturnType.STATUS,
                 Arrays.asList(getCacheStreamKey(request)),
                 "DECREASE_" + request.getIdentifier());
     }

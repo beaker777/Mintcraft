@@ -14,6 +14,7 @@ import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
+import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.mq.producer.StreamProducer;
 import com.beaker.mintcraft.order.exception.OrderException;
 import com.beaker.mintcraft.order.sharding.id.DistributeID;
@@ -115,15 +116,30 @@ public class TradeController {
             // 校验订单创建请求
             orderValidatorChain.validate(orderCreateRequest);
 
-            //
+            // 本地事务执行器: InventoryDecreaseTransactionListener
+            // 消息监听：NewBuyMsgListener or NewBuyBatchMsgListener
             boolean result = streamProducer
                     .send("newBuy-out-0", buyParam.getGoodsType(), JSON.toJSONString(orderCreateRequest));
 
-        } catch (Exception e) {
+            if (!result) {
+                throw new TradeException(ORDER_CREATE_FAILED);
+            }
 
+            // 因为不论本地事务是否执行成功, 只要消息发送成功就会返回 true, 所以需要进行校验
+            InventoryRequest inventoryRequest = new InventoryRequest(orderCreateRequest);
+            SingleResponse<String> response = inventoryFacadeService.getInventoryDecreaseLog(inventoryRequest);
+
+            if (response.getSuccess() && response.getData() != null) {
+                // TODO: 校验是否进行过回滚
+                return Result.success(orderCreateRequest.getOrderId());
+            }
+        } catch (OrderException | TradeException e) {
+            return Result.error(e.getErrorCode().getCode(), e.getErrorCode().getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
 
-        return null;
+        return Result.error(ORDER_CREATE_FAILED.getCode(), TradeErrorCode.ORDER_CANCEL_FAILED.getMessage());
     }
 
     /**

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,6 +41,7 @@ public class TokenController {
     @DubboReference
     private GoodsFacadeService goodsFacadeService;
 
+    @GetMapping("/get")
     public Result<String> get(@NotBlank String scene, @NotBlank String key) {
         // fixme: 这里并没有校验 token 对应的商品和下单的商品是不是一个
         TokenScene tokenScene = Arrays
@@ -48,8 +50,8 @@ public class TokenController {
                 .findFirst()
                 .orElseThrow(() -> new AuthException(TOKEN_SCENE_NOT_EXIST));
 
+        // 校验商品是否存在且可售
         BaseGoodsVO baseGoodsVO = goodsFacadeService.getGoods(key, getGoodsType(tokenScene));
-
         if (baseGoodsVO == null || !baseGoodsVO.available()) {
             throw new AuthException(TOKEN_KEY_IS_ILLEGAL);
         }
