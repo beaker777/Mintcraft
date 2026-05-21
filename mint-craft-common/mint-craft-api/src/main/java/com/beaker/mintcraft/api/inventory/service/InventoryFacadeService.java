@@ -37,6 +37,14 @@ public interface InventoryFacadeService {
     public SingleResponse<Boolean> decrease(InventoryRequest inventoryRequest);
 
     /**
+     * 库存增加
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<Boolean> increase(InventoryRequest inventoryRequest);
+
+    /**
      * 库存核对
      *
      * @param request
@@ -59,4 +67,13 @@ public interface InventoryFacadeService {
      * @return
      */
     public SingleResponse<String> getInventoryDecreaseLog(InventoryRequest inventoryRequest);
+
+
+    /**
+     * 查询库存增加流水
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<String> getInventoryIncreaseLog(InventoryRequest inventoryRequest);
 }

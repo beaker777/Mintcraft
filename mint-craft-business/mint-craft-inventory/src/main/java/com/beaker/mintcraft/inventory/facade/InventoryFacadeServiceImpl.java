@@ -112,6 +112,28 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     }
 
     @Override
+    public SingleResponse<Boolean> increase(InventoryRequest inventoryRequest) {
+        GoodsType goodsType = inventoryRequest.getGoodsType();
+
+        InventoryResponse inventoryResponse = switch (goodsType) {
+            case COLLECTION ->  collectionInventoryService.increase(inventoryRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
+
+        if (inventoryResponse.getSuccess()) {
+            // 如果已售罄商品增加库存, 从缓存池中移除
+            // fixme: 这里缓存池是本地缓存, 所以无法保证一致性, 但我们设置了 1min 的过期时间, 1min 的延迟是允许的
+            if (inventoryResponse.getInventory() != null && inventoryResponse.getInventory() > 0) {
+                soldOutGoodsLocalCache.invalidate(goodsType + SEPARATOR + inventoryRequest.getGoodsId());
+            }
+
+            return SingleResponse.of(true);
+        }
+
+        return SingleResponse.fail(inventoryResponse.getResponseCode(), inventoryResponse.getResponseMessage());
+    }
+
+    @Override
     public SingleResponse<Long> removeInventoryDecreaseLog(InventoryRequest inventoryRequest) {
         GoodsType goodsType = inventoryRequest.getGoodsType();
 
@@ -133,6 +155,15 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
         };
 
         return SingleResponse.of(inventoryResponse);
+    }
+
+    @Override
+    public SingleResponse<String> getInventoryIncreaseLog(InventoryRequest inventoryRequest) {
+        GoodsType goodsType = inventoryRequest.getGoodsType();
+
+        String inventoryResponse = switch (goodsType) {
+            case COLLECTION -> collectionInventoryService
+        }
     }
 
     @Override

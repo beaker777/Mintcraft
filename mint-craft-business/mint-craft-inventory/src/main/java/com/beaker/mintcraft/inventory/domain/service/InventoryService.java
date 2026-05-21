@@ -38,6 +38,14 @@ public interface InventoryService {
     public InventoryResponse decrease(InventoryRequest request);
 
     /**
+     * 增加藏品库存
+     *
+     * @param request
+     * @return
+     */
+    public InventoryResponse increase(InventoryRequest request);
+
+    /**
      * 移除库存操作日志
      * @param request
      * @return
@@ -51,4 +59,12 @@ public interface InventoryService {
      * @return
      */
     public String getInventoryDecreaseLog(InventoryRequest request);
+
+    /**
+     * 获取藏品库存增加日志
+     *
+     * @param request
+     * @return
+     */
+    public String getInventoryIncreaseLog(InventoryRequest request);
 }

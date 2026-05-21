@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 import static com.beaker.mintcraft.base.response.ResponseCode.BIZ_ERROR;
 import static com.beaker.mintcraft.base.response.ResponseCode.DUPLICATED;
@@ -39,14 +39,17 @@ public abstract class AbstractInventoryServiceImpl implements InventoryService {
     public static final String ERROR_CODE_KEY_NOT_FOUND = "KEY_NOT_FOUND";
     public static final String ERROR_CODE_OPERATION_ALREADY_EXECUTED = "OPERATION_ALREADY_EXECUTED";
 
-    public String decreaseScript;
+    private String decreaseScript;
+    private String increaseScript;
 
     @PostConstruct
     public void initLuaScript() {
-        ClassPathResource resource = new ClassPathResource("lua/decrease.lua");
+        ClassPathResource decreaseResource = new ClassPathResource("lua/decrease.lua");
+        ClassPathResource increaseResource = new ClassPathResource("lua/increase.lua");
 
         try {
-            decreaseScript = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            decreaseScript = StreamUtils.copyToString(decreaseResource.getInputStream(), StandardCharsets.UTF_8);
+            increaseScript = StreamUtils.copyToString(increaseResource.getInputStream(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new IllegalArgumentException("读取 lua 脚本失败", e);
         }
@@ -125,6 +128,47 @@ public abstract class AbstractInventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    public InventoryResponse increase(InventoryRequest request) {
+        InventoryResponse inventoryResponse = new InventoryResponse();
+
+        try {
+            // 调用 lua 脚本增加库存
+            Integer result = ((Long) redissonClient.getScript().eval(
+                    RScript.Mode.READ_WRITE,
+                    increaseScript,
+                    RScript.ReturnType.INTEGER,
+                    Arrays.asList(getCacheKey(request), getCacheStreamKey(request)),
+                    request.getInventory(), "INCREASE_" + request.getIdentifier())).intValue();
+
+            inventoryResponse.setSuccess(true);
+            inventoryResponse.setGoodsId(request.getGoodsId());
+            inventoryResponse.setGoodsType(request.getGoodsType());
+            inventoryResponse.setIdentifier(request.getIdentifier());
+            inventoryResponse.setInventory(result);
+            return inventoryResponse;
+        } catch (RedisException e) {
+            logger.error("increase error , goodsId = {} , identifier = {} ,", request.getGoodsId(), request.getIdentifier(), e);
+            inventoryResponse.setSuccess(false);
+            inventoryResponse.setGoodsId(request.getGoodsId());
+            inventoryResponse.setGoodsType(request.getGoodsType());
+            inventoryResponse.setIdentifier(request.getIdentifier());
+
+            // 根据不同错误类型设置错误码
+            if (e.getMessage().startsWith(ERROR_CODE_KEY_NOT_FOUND)) {
+                inventoryResponse.setResponseCode(ERROR_CODE_KEY_NOT_FOUND);
+            } else if (e.getMessage().startsWith(ERROR_CODE_OPERATION_ALREADY_EXECUTED)) {
+                inventoryResponse.setResponseCode(ERROR_CODE_OPERATION_ALREADY_EXECUTED);
+                inventoryResponse.setSuccess(true);
+            } else {
+                inventoryResponse.setResponseCode(BIZ_ERROR.name());
+            }
+            inventoryResponse.setResponseMessage(e.getMessage());
+
+            return inventoryResponse;
+        }
+    }
+
+    @Override
     public Long removeInventoryDecreaseLog(InventoryRequest request) {
         String luaScript = """
                 local jsonString = redis.call('hdel', KEYS[1], ARGV[1])
@@ -152,6 +196,21 @@ public abstract class AbstractInventoryServiceImpl implements InventoryService {
                 RScript.ReturnType.STATUS,
                 Arrays.asList(getCacheStreamKey(request)),
                 "DECREASE_" + request.getIdentifier());
+    }
+
+    @Override
+    public String getInventoryIncreaseLog(InventoryRequest request) {
+        String luaScript = """
+                local jsonString = redis.call('hget', KEYS[1], ARGV[1])
+                return jsonString
+                """;
+
+        return redissonClient.getScript().eval(
+                RScript.Mode.READ_WRITE,
+                luaScript,
+                RScript.ReturnType.STATUS,
+                Arrays.asList(getCacheStreamKey(request)),
+                "INCREASE_" + request.getIdentifier());
     }
 
     /**

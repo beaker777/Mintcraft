@@ -130,8 +130,12 @@ public class TradeController {
             SingleResponse<String> response = inventoryFacadeService.getInventoryDecreaseLog(inventoryRequest);
 
             if (response.getSuccess() && response.getData() != null) {
-                // TODO: 校验是否进行过回滚
-                return Result.success(orderCreateRequest.getOrderId());
+                // 检查一下是否由回退库存的流水, 如果回退过, 无需进行旁路校验
+                SingleResponse<String> increaseLog = inventoryFacadeService.getInventoryIncreaseLog(inventoryRequest);
+                if (increaseLog.getSuccess() && increaseLog.getData() == null) {
+                    inventoryByPassVerify(inventoryRequest);
+                    return Result.success(orderCreateRequest.getOrderId());
+                }
             }
         } catch (OrderException | TradeException e) {
             return Result.error(e.getErrorCode().getCode(), e.getErrorCode().getMessage());
