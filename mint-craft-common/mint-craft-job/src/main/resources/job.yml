@@ -1,0 +1,7 @@
+spring:
+  xxl:
+    job:
+      enabled: true
+      adminAddresses: http://${mintcraft.xxl-job.url}/xxl-job-admin/
+      appName: ${mintcraft.xxl-job.appName}
+      accessToken: ${mintcraft.xxl-job.accessToken}

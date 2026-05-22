@@ -41,3 +41,11 @@ mintcraft:
   rocketmq:
     # RocketMQ 的地址 + 端口号
     url: 127.0.0.1:9876
+
+  xxl-job:
+    # XXL-JOB 的地址
+    url: 127.0.0.1:23333
+    # 需要与在 xxl-job 上创建的执行器名字保持一致
+    appName: xxl-job-executor
+    # 需要与在 xxl-job 上创建的 token 保持一致，这里需要改成你自己的
+    accessToken: default_token

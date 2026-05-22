@@ -30,6 +30,7 @@
         <module>mint-craft-es</module>
         <module>mint-craft-order-client</module>
         <module>mint-craft-mq</module>
+        <module>mint-craft-job</module>
     </modules>
 
     <properties>
