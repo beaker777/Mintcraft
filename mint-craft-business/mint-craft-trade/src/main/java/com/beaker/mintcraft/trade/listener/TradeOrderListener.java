@@ -9,13 +9,13 @@ import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
 import com.beaker.mintcraft.api.order.request.OrderCancelRequest;
+import com.beaker.mintcraft.api.order.request.OrderTimeoutRequest;
 import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.mq.consumer.AbstractStreamConsumer;
 import com.beaker.mintcraft.mq.param.MessageBody;
-import com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode;
 import com.beaker.mintcraft.trade.infrastructure.exception.TradeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +55,7 @@ public class TradeOrderListener extends AbstractStreamConsumer {
             if (TradeOrderEvent.CANCEL.name().equals(closeType)) {
                 orderUpdateRequest = getMessage(msg, OrderCancelRequest.class);
             } else if (TradeOrderEvent.TIME_OUT.name().equals(closeType)) {
-                // TODO: 这里后续要补充超时关单的情况
-                orderUpdateRequest = new OrderCancelRequest();
+                orderUpdateRequest = getMessage(msg, OrderTimeoutRequest.class);
             } else {
                 throw new UnsupportedOperationException("unsupported closeType: {}" + closeType);
             }

@@ -4,7 +4,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   config:
-    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:datasource-sharding.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:datasource-sharding.yml, optional:classpath:mq.yml
+    import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:datasource-sharding.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:datasource-sharding.yml, optional:classpath:mq.yml, optional:classpath:job.yml
   cloud:
     function:
       definition: newBuy;

@@ -76,6 +76,12 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.beaker</groupId>
+            <artifactId>mint-craft-job</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
         <!--    shardingsphere 和 2.2 不兼容, 需要使用 1.33, 但是 1.33 和 springboot 3.2.2 不兼容.
                 所以自定义了 TagInspector 和 UnTrustedTagInspector  -->
         <dependency>

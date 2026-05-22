@@ -7,8 +7,13 @@ import com.beaker.mintcraft.api.order.constant.TradeOrderState;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.infrastructure.mapper.OrderMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Nullable;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @Author beaker
@@ -67,5 +72,22 @@ public class OrderService extends ServiceImpl<OrderMapper, TradeOrder> {
         wrapper.orderBy(true, false, "gmt_create");
 
         return this.page(page, wrapper);
+    }
+
+    public List<TradeOrder> pageQueryTimeoutOrders(int pageSize, @Nullable String buyerIdTailNumber, Long minId) {
+        // 包装查询条件
+        QueryWrapper<TradeOrder> wrapper = new QueryWrapper<>();
+        wrapper.in("order_state", TradeOrderState.CREATE.name(), TradeOrderState.CONFIRM.name());
+        wrapper.lt("gmt_create", DateUtils.addMinutes(new Date(), -TradeOrder.DEFAULT_TIME_OUT_MINUTES));
+        if (buyerIdTailNumber != null) {
+            wrapper.likeRight("reverse_buyer_id", buyerIdTailNumber);
+        }
+        if (minId != null) {
+            wrapper.ge("id", minId);
+        }
+        wrapper.orderBy(true, true, "gmt_create");
+        wrapper.last("limit " + pageSize);
+
+        return this.list(wrapper);
     }
 }

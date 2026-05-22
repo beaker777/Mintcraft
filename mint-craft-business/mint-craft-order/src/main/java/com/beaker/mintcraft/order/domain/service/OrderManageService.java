@@ -5,10 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.exception.OrderErrorCode;
-import com.beaker.mintcraft.api.order.request.OrderCancelRequest;
-import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
-import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
-import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
+import com.beaker.mintcraft.api.order.request.*;
 import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.user.constant.UserType;
@@ -127,7 +124,23 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
         return new OrderResponse.OrderResponseBuilder().orderId(tradeOrder.getOrderId()).buildSuccess();
     }
 
+    /**
+     * 主动取消订单
+     *
+     * @param request
+     * @return
+     */
     public OrderResponse cancel(OrderCancelRequest request) {
+        return doExecute(request, tradeOrder -> tradeOrder.close(request));
+    }
+
+    /**
+     * 超时关闭订单
+     *
+     * @param request
+     * @return
+     */
+    public OrderResponse timeout(OrderTimeoutRequest request) {
         return doExecute(request, tradeOrder -> tradeOrder.close(request));
     }
 

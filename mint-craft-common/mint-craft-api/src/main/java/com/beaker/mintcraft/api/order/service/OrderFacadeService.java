@@ -70,4 +70,11 @@ public interface OrderFacadeService {
      */
     public OrderResponse cancel(OrderCancelRequest request);
 
+    /**
+     * 订单超时
+     *
+     * @param request
+     * @return
+     */
+    public OrderResponse timeout(OrderTimeoutRequest request);
 }

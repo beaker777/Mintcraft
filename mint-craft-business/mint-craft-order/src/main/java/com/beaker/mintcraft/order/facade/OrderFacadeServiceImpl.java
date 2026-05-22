@@ -164,6 +164,11 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
         return sendTransactionMsgForClose(request);
     }
 
+    @Override
+    public OrderResponse timeout(OrderTimeoutRequest request) {
+        return sendTransactionMsgForClose(request);
+    }
+
     private OrderResponse sendTransactionMsgForClose(BaseOrderUpdateRequest request) {
         // 本地事务执行器: OrderCloseTransactionListener
         // 消息监听: TradeOrderListener

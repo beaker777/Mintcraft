@@ -4,13 +4,12 @@ import com.alibaba.fastjson2.JSON;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
 import com.beaker.mintcraft.api.order.request.OrderCancelRequest;
+import com.beaker.mintcraft.api.order.request.OrderTimeoutRequest;
 import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.domain.service.OrderManageService;
 import com.beaker.mintcraft.order.domain.service.OrderService;
-import com.beaker.mintcraft.order.infrastructure.mapper.OrderMapper;
-import io.vertx.core.json.Json;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.TransactionListener;
 import org.apache.rocketmq.common.message.Message;
@@ -19,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * @Author beaker
@@ -52,7 +49,10 @@ public class OrderCloseTransactionListener implements TransactionListener {
 
                 logger.info("executeLocalTransaction , baseOrderUpdateRequest = {} , closeType = {}", JSON.toJSONString(orderCancelRequest), closeType);
             } else if (TradeOrderEvent.TIME_OUT.name().equals(closeType)) {
-                // TODO: 这里后续要补充超时关单
+                OrderTimeoutRequest orderTimeoutRequest = JSON.parseObject(JSON.parseObject(msg.getBody()).getString("body"), OrderTimeoutRequest.class);
+                orderResponse = orderManageService.timeout(orderTimeoutRequest);
+
+                logger.info("executeLocalTransaction , baseOrderUpdateRequest = {} , closeType = {}", JSON.toJSONString(orderTimeoutRequest), closeType);
             } else {
                 throw new UnsupportedOperationException("unsupported closeType: " + closeType);
             }
@@ -77,7 +77,9 @@ public class OrderCloseTransactionListener implements TransactionListener {
         if (TradeOrderEvent.CANCEL.name().equals(closeType)) {
             baseOrderUpdateRequest = JSON.parseObject(JSON.parseObject(new String(msg.getBody())).getString("body"), OrderCancelRequest.class);
         } else if (TradeOrderEvent.TIME_OUT.name().equals(closeType)) {
-            // TODO: 这里后续要补充超时关单
+            baseOrderUpdateRequest = JSON.parseObject(JSON.parseObject(new String(msg.getBody())).getString("body"), OrderTimeoutRequest.class);
+        } else {
+            return LocalTransactionState.ROLLBACK_MESSAGE;
         }
 
         TradeOrder tradeOrder = orderService.getOrder(baseOrderUpdateRequest.getOrderId());
