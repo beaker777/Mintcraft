@@ -5,7 +5,7 @@ spring:
     import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:mq.yml
   cloud:
     function:
-      definition: newBuy;
+      definition: orderClose;
     stream:
       rocketmq:
         bindings:
@@ -18,6 +18,11 @@ spring:
           content-type: application/json
           destination: new-buy-topic
           group: trade-group
+          binder: rocketmq
+        orderClose-in-0:
+          content-type: application/json
+          destination: order-close-topic
+          group: order-group
           binder: rocketmq
 
 server:

@@ -6,12 +6,25 @@ spring:
   config:
     import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:datasource-sharding.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:datasource-sharding.yml, optional:classpath:mq.yml
   cloud:
+    function:
+      definition: newBuy;
     stream:
+      rocketmq:
+        bindings:
+          orderClose-out-0:
+            producer:
+              producerType: Trans
+              transactionListener: orderCloseTransactionListener
       bindings:
         newBuy-in-0:
           content-type: application/json
           destination: new-buy-topic
           group: trade-group
+          binder: rocketmq
+        orderClose-out-0:
+          content-type: application/json
+          destination: order-close-topic
+          group: order-group
           binder: rocketmq
   shardingsphere:
     rules:
