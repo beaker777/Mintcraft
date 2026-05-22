@@ -1,15 +1,14 @@
 package com.beaker.mintcraft.order.facade;
 
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
 import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
 import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
-import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
-import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
-import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
-import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
+import com.beaker.mintcraft.api.order.request.*;
+import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
@@ -21,6 +20,7 @@ import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.lock.DistributeLock;
+import com.beaker.mintcraft.mq.producer.StreamProducer;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.domain.entity.convertor.TradeOrderConvertor;
 import com.beaker.mintcraft.order.domain.service.OrderManageService;
@@ -63,6 +63,9 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
 
     @Resource
     private OrderCreateValidator orderConfirmValidatorChain;
+
+    @Resource
+    private StreamProducer streamProducer;
 
     @Override
     public SingleResponse<TradeOrderVO> getTradeOrder(String orderId) {
@@ -154,6 +157,24 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
         }
 
         return orderManageService.createAndConfirm(request);
+    }
+
+    @Override
+    public OrderResponse cancel(OrderCancelRequest request) {
+        return sendTransactionMsgForClose(request);
+    }
+
+    private OrderResponse sendTransactionMsgForClose(BaseOrderUpdateRequest request) {
+        // 本地事务执行器: OrderCloseTransactionListener
+        // 消息监听: TradeOrderListener
+        streamProducer.send("orderClose-out-0", null, JSON.toJSONString(request), "CLOSE_TYPE", request.getOrderEvent().name());
+
+        // 因为 MQ 只要发送成功 msg 就会返回 true, 需要反查一遍确保已经关闭订单了
+        TradeOrder tradeOrder = orderService.getOrder(request.getOrderId());
+        OrderResponse orderResponse = new OrderResponse();
+        orderResponse.setSuccess(tradeOrder.isClosed());
+
+        return orderResponse;
     }
 
     private String getSellerName(TradeOrderVO tradeOrderVO) {

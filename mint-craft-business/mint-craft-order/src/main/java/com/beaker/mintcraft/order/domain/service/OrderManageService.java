@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.exception.OrderErrorCode;
+import com.beaker.mintcraft.api.order.request.OrderCancelRequest;
 import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
@@ -92,6 +93,12 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
         return doExecute(request, tradeOrder -> tradeOrder.confirm(request));
     }
 
+    /**
+     * 订单创建并同步确认
+     *
+     * @param request
+     * @return
+     */
     @Transactional(rollbackFor = Exception.class)
     public OrderResponse createAndConfirm(OrderCreateAndConfirmRequest request) {
         // 幂等校验
@@ -118,6 +125,10 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
         Assert.isTrue(result, () -> new BizException(RepoErrorCode.INSERT_FAILED));
 
         return new OrderResponse.OrderResponseBuilder().orderId(tradeOrder.getOrderId()).buildSuccess();
+    }
+
+    public OrderResponse cancel(OrderCancelRequest request) {
+        return doExecute(request, tradeOrder -> tradeOrder.close(request));
     }
 
     private TradeOrder doCreate(OrderCreateRequest request) {

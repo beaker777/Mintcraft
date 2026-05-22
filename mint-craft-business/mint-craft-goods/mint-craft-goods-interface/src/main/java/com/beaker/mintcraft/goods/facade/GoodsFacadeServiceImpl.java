@@ -4,6 +4,7 @@ import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
 import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
+import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
@@ -67,6 +68,22 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
 
         response.setSuccess(trySaleResult);
         return response;
+    }
+
+    @Override
+    public GoodsSaleResponse cancelSale(GoodsSaleRequest request) {
+        GoodsSaleResponse goodsSaleResponse = new GoodsSaleResponse();
+        GoodsCancelSaleRequest goodsCancelSaleRequest = new GoodsCancelSaleRequest(request.getIdentifier(), request.getGoodsId(), request.getQuantity());
+
+        GoodsType goodsType = GoodsType.valueOf(request.getGoodsType());
+
+        Boolean result = switch (goodsType) {
+            case COLLECTION -> collectionService.cancel(goodsCancelSaleRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
+
+        goodsSaleResponse.setSuccess(result);
+        return goodsSaleResponse;
     }
 
     @Override

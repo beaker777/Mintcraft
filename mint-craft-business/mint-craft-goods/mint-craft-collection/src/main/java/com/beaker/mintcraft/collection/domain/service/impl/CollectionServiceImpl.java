@@ -5,6 +5,7 @@ import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.entity.CollectionInventoryStream;
@@ -60,6 +61,31 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
 
         // 核心逻辑执行
         result = collectionMapper.sale(request.goodsId(), request.quantity());
+        Assert.isTrue(result == 1, () -> new CollectionException(COLLECTION_SAVE_FAILED));
+
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean cancel(GoodsCancelSaleRequest request) {
+        // 幂等校验
+        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+                .selectByIdentifier(request.identifier(), request.eventType().name(), request.collectionId());
+        if (existStream != null) {
+            return true;
+        }
+
+        // 去数据库查询出最新的值
+        Collection collection = this.getById(request.collectionId());
+
+        // 写入 collection 库存流水
+        CollectionInventoryStream stream = new CollectionInventoryStream(collection, request.identifier(), request.eventType(), request.quantity());
+        int result = collectionInventoryStreamMapper.insert(stream);
+        Assert.isTrue(result == 1, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
+
+        // 核心逻辑执行
+        result = collectionMapper.cancel(request.collectionId(), request.quantity());
         Assert.isTrue(result == 1, () -> new CollectionException(COLLECTION_SAVE_FAILED));
 
         return true;

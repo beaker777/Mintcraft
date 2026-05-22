@@ -1,9 +1,6 @@
 package com.beaker.mintcraft.api.order.service;
 
-import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
-import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
-import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
-import com.beaker.mintcraft.api.order.request.OrderPageQueryRequest;
+import com.beaker.mintcraft.api.order.request.*;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.base.response.PageResponse;
@@ -63,5 +60,14 @@ public interface OrderFacadeService {
      * @return
      */
     public OrderResponse createAndConfirm(OrderCreateAndConfirmRequest request);
+
+
+    /**
+     * 取消订单
+     *
+     * @param request
+     * @return
+     */
+    public OrderResponse cancel(OrderCancelRequest request);
 
 }

@@ -2,6 +2,7 @@ package com.beaker.mintcraft.api.goods.request;
 
 import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
 import com.beaker.mintcraft.api.order.request.OrderCreateAndConfirmRequest;
+import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -68,6 +69,14 @@ public class GoodsSaleRequest extends BaseGoodsRequest implements Serializable {
         super.setGoodsId(Long.valueOf(orderCreateAndConfirmRequest.getGoodsId()));
         super.setGoodsType(orderCreateAndConfirmRequest.getGoodsType().name());
         super.setIdentifier(orderCreateAndConfirmRequest.getOrderId());
+    }
+
+    public GoodsSaleRequest(TradeOrderVO tradeOrderVO) {
+        this.setBizNo(tradeOrderVO.getOrderId());
+        this.setIdentifier(tradeOrderVO.getOrderId());
+        this.setQuantity(tradeOrderVO.getItemCount());
+        this.setGoodsType(tradeOrderVO.getGoodsType().name());
+        this.setGoodsId(Long.valueOf(tradeOrderVO.getGoodsId()));
     }
 
 }

@@ -24,12 +24,20 @@ public interface GoodsFacadeService {
     public BaseGoodsVO getGoods(String goodsId, GoodsType goodsType);
 
     /**
-     * 藏品出售的try阶段，做库存占用
+     * 藏品出售的 try 阶段，做库存占用
      *
      * @param request
      * @return
      */
     public GoodsSaleResponse sale(GoodsSaleRequest request);
+
+    /**
+     * 藏品出售的 cancel 阶段，做库存退还
+     *
+     * @param request
+     * @return
+     */
+    public GoodsSaleResponse cancelSale(GoodsSaleRequest request);
 
     /**
      * 获取商品流水

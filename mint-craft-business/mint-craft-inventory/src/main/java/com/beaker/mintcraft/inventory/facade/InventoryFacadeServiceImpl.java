@@ -162,8 +162,11 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
         GoodsType goodsType = inventoryRequest.getGoodsType();
 
         String inventoryResponse = switch (goodsType) {
-            case COLLECTION -> collectionInventoryService
-        }
+            case COLLECTION -> collectionInventoryService.getInventoryIncreaseLog(inventoryRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        };
+
+        return SingleResponse.of(inventoryResponse);
     }
 
     @Override

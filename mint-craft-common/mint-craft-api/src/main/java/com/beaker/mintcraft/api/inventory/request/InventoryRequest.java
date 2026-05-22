@@ -2,6 +2,7 @@ package com.beaker.mintcraft.api.inventory.request;
 
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
+import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.base.request.BaseRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -45,5 +46,12 @@ public class InventoryRequest extends BaseRequest {
         this.goodsType = orderCreateRequest.getGoodsType();
         this.identifier = orderCreateRequest.getOrderId();
         this.inventory = orderCreateRequest.getItemCount();
+    }
+
+    public InventoryRequest(TradeOrderVO tradeOrderVO) {
+        this.setGoodsId(tradeOrderVO.getGoodsId());
+        this.setInventory(tradeOrderVO.getItemCount());
+        this.setIdentifier(tradeOrderVO.getOrderId());
+        this.setGoodsType(tradeOrderVO.getGoodsType());
     }
 }

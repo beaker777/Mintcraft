@@ -11,9 +11,11 @@ import com.beaker.mintcraft.api.inventory.request.InventoryCheckRequest;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.response.InventoryCheckResponse;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.api.order.request.OrderCancelRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
+import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.mq.producer.StreamProducer;
 import com.beaker.mintcraft.order.exception.OrderException;
@@ -24,6 +26,7 @@ import com.beaker.mintcraft.rpc.support.RemoteCallWrapper;
 import com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode;
 import com.beaker.mintcraft.trade.infrastructure.exception.TradeException;
 import com.beaker.mintcraft.trade.param.BuyParam;
+import com.beaker.mintcraft.trade.param.CancelParam;
 import com.beaker.mintcraft.web.vo.Result;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.validation.Valid;
@@ -36,11 +39,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode.ORDER_CANCEL_FAILED;
 import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode.ORDER_CREATE_FAILED;
 import static com.beaker.mintcraft.web.filter.TokenFilter.TOKEN_THREAD_LOCAL;
 
@@ -77,7 +82,8 @@ public class TradeController {
 
     /**
      * 下单
-     * 秒杀下单，热点商品
+     * 秒杀下单, 热点商品
+     *  MySQL + Redis
      *
      * @param
      * @return 订单号
@@ -108,6 +114,13 @@ public class TradeController {
         return Result.error(ORDER_CREATE_FAILED.getCode(), ORDER_CREATE_FAILED.getMessage());
     }
 
+    /**
+     * 下单
+     * 秒杀下单, 热点商品
+     *  MySQL + Redis + RocketMQ
+     * @param buyParam
+     * @return
+     */
     @PostMapping("/newBuy")
     public Result<String> newBuy(@Valid @RequestBody BuyParam buyParam) {
         try {
@@ -117,7 +130,7 @@ public class TradeController {
             orderValidatorChain.validate(orderCreateRequest);
 
             // 本地事务执行器: InventoryDecreaseTransactionListener
-            // 消息监听：NewBuyMsgListener or NewBuyBatchMsgListener
+            // 消息监听: NewBuyMsgListener or NewBuyBatchMsgListener
             boolean result = streamProducer
                     .send("newBuy-out-0", buyParam.getGoodsType(), JSON.toJSONString(orderCreateRequest));
 
@@ -144,6 +157,33 @@ public class TradeController {
         }
 
         return Result.error(ORDER_CREATE_FAILED.getCode(), TradeErrorCode.ORDER_CANCEL_FAILED.getMessage());
+    }
+
+    /**
+     * 取消订单
+     *
+     * @param cancelParam
+     * @return
+     */
+    @PostMapping("/cancel")
+    public Result<Boolean> cancel(@Valid @RequestBody CancelParam cancelParam) {
+        String userId = (String) StpUtil.getLoginId();
+
+        OrderCancelRequest orderCancelRequest = new OrderCancelRequest();
+        orderCancelRequest.setIdentifier(cancelParam.getOrderId());
+        orderCancelRequest.setOperateTime(new Date());
+        orderCancelRequest.setOrderId(cancelParam.getOrderId());
+        orderCancelRequest.setOperator(userId);
+        orderCancelRequest.setOperatorType(UserType.CUSTOMER);
+
+        OrderResponse orderResponse = RemoteCallWrapper.call(req -> orderFacadeService.cancel(req),
+                orderCancelRequest, "cancelOrder");
+
+        if (orderResponse.getSuccess()) {
+            return  Result.success(true);
+        }
+
+        throw new TradeException(ORDER_CANCEL_FAILED);
     }
 
     /**

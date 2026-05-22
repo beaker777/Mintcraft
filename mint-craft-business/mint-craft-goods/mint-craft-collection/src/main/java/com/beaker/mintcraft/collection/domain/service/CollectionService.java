@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.collection.domain.service;
 
+import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
@@ -38,4 +39,12 @@ public interface CollectionService {
      */
     public Boolean sale(GoodsTrySaleRequest request);
 
+
+    /**
+     * 取消
+     *
+     * @param request
+     * @return
+     */
+    public Boolean cancel(GoodsCancelSaleRequest request);
 }
