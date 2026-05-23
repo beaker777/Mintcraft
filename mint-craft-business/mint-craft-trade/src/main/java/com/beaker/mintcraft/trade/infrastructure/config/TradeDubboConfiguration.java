@@ -3,6 +3,7 @@ package com.beaker.mintcraft.trade.infrastructure.config;
 import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
+import com.beaker.mintcraft.api.pay.service.PayFacadeService;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -29,6 +30,9 @@ public class TradeDubboConfiguration {
     @DubboReference
     private UserFacadeService userFacadeService;
 
+    @DubboReference
+    private PayFacadeService payFacadeService;
+
     @Bean
     @ConditionalOnMissingBean(name = "goodsFacadeService")
     public GoodsFacadeService goodsFacadeService() {
@@ -51,5 +55,11 @@ public class TradeDubboConfiguration {
     @ConditionalOnMissingBean(name = "userFacadeService")
     public UserFacadeService userFacadeService() {
         return userFacadeService;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "payFacadeService")
+    public PayFacadeService payFacadeService() {
+        return payFacadeService;
     }
 }

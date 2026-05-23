@@ -20,6 +20,8 @@ import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.api.pay.request.PayCreateRequest;
+import com.beaker.mintcraft.api.pay.response.PayCreateResponse;
+import com.beaker.mintcraft.api.pay.service.PayFacadeService;
 import com.beaker.mintcraft.api.pay.valobj.PayOrderVO;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.base.response.SingleResponse;
@@ -82,6 +84,9 @@ public class TradeController {
 
     @Autowired
     private OrderCreateValidator orderValidatorChain;
+
+    @Autowired
+    private PayFacadeService payFacadeService;
 
     @Autowired
     private StreamProducer streamProducer;
@@ -237,8 +242,18 @@ public class TradeController {
         payCreateRequest.setPayeeId(tradeOrderVO.getSellerId());
         payCreateRequest.setPayeeType(tradeOrderVO.getSellerType());
 
-        // TODO: 补充 pay 模块相关
-        return null;
+        // 创建并生成支付单 URL
+        PayCreateResponse payCreateResponse = RemoteCallWrapper.call(req -> payFacadeService.generatePayUrl(req), payCreateRequest, "generatePayUrl");
+
+        if (payCreateResponse.getSuccess()) {
+            PayOrderVO payOrderVO = new PayOrderVO();
+            payOrderVO.setPayOrderId(payCreateResponse.getPayOrderId());
+            payOrderVO.setPayUrl(payCreateResponse.getPayUrl());
+
+            return Result.success(payOrderVO);
+        }
+
+        throw new TradeException(PAY_CREATE_FAILED);
     }
 
     /**

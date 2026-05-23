@@ -2,6 +2,7 @@ package com.beaker.mintcraft.order.infrastructure.config;
 
 import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.api.pay.service.PayFacadeService;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
