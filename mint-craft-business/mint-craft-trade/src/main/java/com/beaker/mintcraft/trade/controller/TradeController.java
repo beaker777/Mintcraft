@@ -2,6 +2,7 @@ package com.beaker.mintcraft.trade.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.alibaba.fastjson2.JSON;
+import com.beaker.mintcraft.api.common.constant.BizOrderType;
 import com.beaker.mintcraft.api.common.constant.BusinessCode;
 import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
@@ -11,10 +12,15 @@ import com.beaker.mintcraft.api.inventory.request.InventoryCheckRequest;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.response.InventoryCheckResponse;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.api.order.constant.TradeOrderState;
 import com.beaker.mintcraft.api.order.request.OrderCancelRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
+import com.beaker.mintcraft.api.order.request.OrderTimeoutRequest;
 import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
+import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
+import com.beaker.mintcraft.api.pay.request.PayCreateRequest;
+import com.beaker.mintcraft.api.pay.valobj.PayOrderVO;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.mq.producer.StreamProducer;
@@ -27,6 +33,7 @@ import com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode;
 import com.beaker.mintcraft.trade.infrastructure.exception.TradeException;
 import com.beaker.mintcraft.trade.param.BuyParam;
 import com.beaker.mintcraft.trade.param.CancelParam;
+import com.beaker.mintcraft.trade.param.PayParam;
 import com.beaker.mintcraft.web.vo.Result;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.validation.Valid;
@@ -45,8 +52,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode.ORDER_CANCEL_FAILED;
-import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode.ORDER_CREATE_FAILED;
+import static com.beaker.mintcraft.trade.infrastructure.exception.TradeErrorCode.*;
 import static com.beaker.mintcraft.web.filter.TokenFilter.TOKEN_THREAD_LOCAL;
 
 /**
@@ -187,6 +193,100 @@ public class TradeController {
     }
 
     /**
+     * 支付订单
+     *
+     * @param payParam
+     * @return
+     */
+    @PostMapping("/pay")
+    public Result<PayOrderVO> pay(@Valid @RequestBody PayParam payParam) {
+        String userId = (String) StpUtil.getLoginId();
+        SingleResponse<TradeOrderVO> response = orderFacadeService.getTradeOrder(payParam.getOrderId(), userId);
+
+        TradeOrderVO tradeOrderVO = response.getData();
+
+        // 校验订单是否存在
+        if (tradeOrderVO == null) {
+            throw new TradeException(GOODS_NOT_EXIST);
+        }
+
+        // 校验订单状态, 只有 confirm 才会支付
+        if (tradeOrderVO.getOrderState() != TradeOrderState.CONFIRM) {
+            throw new TradeException(ORDER_IS_CANNOT_PAY);
+        }
+
+        // 校验订单是否已超时, 且未被关单
+        if (tradeOrderVO.getTimeout()) {
+            doAsyncTimeout(tradeOrderVO);
+            throw new TradeException(ORDER_IS_CANNOT_PAY);
+        }
+
+        // 校验当前用户是否为订单创建用户
+        if (!tradeOrderVO.getBuyerId().equals(userId)) {
+            throw new TradeException(PAY_PERMISSION_DENIED);
+        }
+
+        PayCreateRequest payCreateRequest = new PayCreateRequest();
+        payCreateRequest.setOrderAmount(tradeOrderVO.getOrderAmount());
+        payCreateRequest.setBizNo(tradeOrderVO.getOrderId());
+        payCreateRequest.setBizType(BizOrderType.TRADE_ORDER);
+        payCreateRequest.setMemo(tradeOrderVO.getGoodsName());
+        payCreateRequest.setPayChannel(payParam.getPayChannel());
+        payCreateRequest.setPayerId(tradeOrderVO.getBuyerId());
+        payCreateRequest.setPayerType(tradeOrderVO.getBuyerType());
+        payCreateRequest.setPayeeId(tradeOrderVO.getSellerId());
+        payCreateRequest.setPayeeType(tradeOrderVO.getSellerType());
+
+        // TODO: 补充 pay 模块相关
+        return null;
+    }
+
+    /**
+     * 数据库库存扣减旁路校验
+     *
+     * @param inventoryRequest
+     */
+    private void inventoryByPassVerify(InventoryRequest inventoryRequest) {
+        try {
+            // 延迟 3s 后校验数据库是否有库存扣减记录
+            scheduler.schedule(() -> {
+                InventoryCheckRequest inventoryCheckRequest = new InventoryCheckRequest();
+                inventoryCheckRequest.setIdentifier(inventoryRequest.getIdentifier());
+                inventoryCheckRequest.setGoodsType(inventoryRequest.getGoodsType());
+                inventoryCheckRequest.setGoodsId(inventoryRequest.getGoodsId());
+                inventoryCheckRequest.setGoodsEvent(GoodsEvent.TRY_SALE);
+                inventoryCheckRequest.setChangedQuantity(inventoryRequest.getInventory());
+
+                InventoryCheckResponse checkResponse = inventoryFacadeService.check(inventoryCheckRequest);
+                // 核验成功
+                if (checkResponse.getSuccess() && checkResponse.getCheckResult()) {
+                    // 删除库存扣减流水记录
+                    inventoryFacadeService.removeInventoryDecreaseLog(inventoryRequest);
+                }
+            }, 3, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            // 打印失败日志, 不影响主流程, 等待异步任务核对
+            log.error("inventoryByPassVerify failed, ", e);
+        }
+    }
+
+    private void doAsyncTimeout(TradeOrderVO tradeOrderVO) {
+        // 只有已过期且未被关单才执行
+        if (tradeOrderVO.getOrderState() != TradeOrderState.CLOSED) {
+            Thread.ofVirtual().start(() -> {
+                OrderTimeoutRequest timeoutRequest = new OrderTimeoutRequest();
+                timeoutRequest.setOperatorType(UserType.PLATFORM);
+                timeoutRequest.setOperator(UserType.PLATFORM.name());
+                timeoutRequest.setOperateTime(new Date());
+                timeoutRequest.setOrderId(tradeOrderVO.getOrderId());
+                timeoutRequest.setIdentifier(tradeOrderVO.getOrderId());
+
+                orderFacadeService.timeout(timeoutRequest);
+            });
+        }
+    }
+
+    /**
      * 订单创建请求构建
      *
      * @param buyParam
@@ -224,32 +324,4 @@ public class TradeController {
         return orderCreateRequest;
     }
 
-    /**
-     * 数据库库存扣减旁路校验
-     *
-     * @param inventoryRequest
-     */
-    private void inventoryByPassVerify(InventoryRequest inventoryRequest) {
-        try {
-            // 延迟 3s 后校验数据库是否有库存扣减记录
-            scheduler.schedule(() -> {
-                InventoryCheckRequest inventoryCheckRequest = new InventoryCheckRequest();
-                inventoryCheckRequest.setIdentifier(inventoryRequest.getIdentifier());
-                inventoryCheckRequest.setGoodsType(inventoryRequest.getGoodsType());
-                inventoryCheckRequest.setGoodsId(inventoryRequest.getGoodsId());
-                inventoryCheckRequest.setGoodsEvent(GoodsEvent.TRY_SALE);
-                inventoryCheckRequest.setChangedQuantity(inventoryRequest.getInventory());
-
-                InventoryCheckResponse checkResponse = inventoryFacadeService.check(inventoryCheckRequest);
-                // 核验成功
-                if (checkResponse.getSuccess() && checkResponse.getCheckResult()) {
-                    // 删除库存扣减流水记录
-                    inventoryFacadeService.removeInventoryDecreaseLog(inventoryRequest);
-                }
-            }, 3, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            // 打印失败日志, 不影响主流程, 等待异步任务核对
-            log.error("inventoryByPassVerify failed, ", e);
-        }
-    }
 }

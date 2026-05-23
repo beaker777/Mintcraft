@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.order.job;
 
 import com.beaker.mintcraft.api.order.request.OrderTimeoutRequest;
+import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.domain.service.OrderManageService;
@@ -8,6 +9,7 @@ import com.beaker.mintcraft.order.domain.service.OrderService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import jakarta.annotation.Resource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -46,6 +48,9 @@ public class OrderJob {
 
     @Autowired
     private OrderService orderService;
+
+    @Resource
+    private OrderFacadeService orderFacadeService;
 
     @Autowired
     private OrderManageService orderManageService;
@@ -130,6 +135,6 @@ public class OrderJob {
         orderTimeoutRequest.setOperatorType(UserType.PLATFORM);
         orderTimeoutRequest.setIdentifier(tradeOrder.getOrderId());
 
-        orderManageService.timeout(orderTimeoutRequest);
+        orderFacadeService.timeout(orderTimeoutRequest);
     }
 }

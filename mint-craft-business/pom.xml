@@ -18,6 +18,7 @@
         <module>mint-craft-inventory</module>
         <module>mint-craft-order</module>
         <module>mint-craft-trade</module>
+        <module>mint-craft-pay</module>
     </modules>
 
     <properties>

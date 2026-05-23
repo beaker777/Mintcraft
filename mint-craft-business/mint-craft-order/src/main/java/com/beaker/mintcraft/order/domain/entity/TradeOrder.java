@@ -156,7 +156,8 @@ public class TradeOrder extends BaseEntity {
 
     @JSONField(serialize = false)
     public Boolean isTimeout() {
-        //订单已关闭 (订单未支付且未关闭 并且 订单已经达到了超时时间)
+        // 1. 订单已关闭, 且关闭类型为 timeout
+        // 2. 订单未关闭, 但已经到了超时时间
         return (orderState == TradeOrderState.CLOSED && closeType == TradeOrderEvent.TIME_OUT.name())
                 || (orderState == TradeOrderState.CONFIRM && this.getGmtCreate().compareTo(DateUtils.addMinutes(new Date(), -TradeOrder.DEFAULT_TIME_OUT_MINUTES)) < 0);
     }
