@@ -261,8 +261,8 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         Assert.isTrue(user.getState() == UserState.AUTH, () -> new UserException(USER_STATUS_IS_NOT_AUTH));
 
         // 更新用户状态
-        user.auth(userActiveRequest.getBlockChainUrl(), userActiveRequest.getBlockChainPlatform());
-        boolean updateResult = this.updateById(user);
+        user.active(userActiveRequest.getBlockChainUrl(), userActiveRequest.getBlockChainPlatform());
+        boolean updateResult = updateById(user);
         if (updateResult) {
             // 写入流水
             Long streamResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.ACTIVE);

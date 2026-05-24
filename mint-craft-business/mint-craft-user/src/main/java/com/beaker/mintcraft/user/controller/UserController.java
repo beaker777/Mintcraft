@@ -24,6 +24,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,7 +51,7 @@ public class UserController {
     @Autowired
     private FileService fileService;
 
-    @Resource
+    @DubboReference
     private ChainFacadeService chainFacadeService;
 
     @GetMapping("/getUserInfo")

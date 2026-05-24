@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: mint-craft-chain
+  config:
+    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:stream.yml, optional:classpath:limiter.yml
+
+server:
+  port: 8090
