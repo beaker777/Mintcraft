@@ -10,6 +10,7 @@ import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.user.constant.UserOperateTypeEnum;
 import com.beaker.mintcraft.api.user.constant.UserState;
+import com.beaker.mintcraft.api.user.request.UserActiveRequest;
 import com.beaker.mintcraft.api.user.request.UserAuthRequest;
 import com.beaker.mintcraft.api.user.request.UserModifyRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
@@ -241,6 +242,34 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
             userOperatorResponse.setUserInfo(UserConvertor.INSTANCE.mapToVO(user));
         } else {
             // 更新用户信息失败
+            userOperatorResponse.setSuccess(false);
+            userOperatorResponse.setResponseCode(USER_OPERATE_FAILED.getCode());
+            userOperatorResponse.setResponseMessage(USER_OPERATE_FAILED.getMessage());
+        }
+
+        return userOperatorResponse;
+    }
+
+    @CacheInvalidate(name = ":user:cache:id:", key = "args[0].userId")
+    @Transactional(rollbackFor = Exception.class)
+    public UserOperatorResponse active(UserActiveRequest userActiveRequest) {
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        // 查询用户并确认状态为 auth
+        User user = userMapper.findById(userActiveRequest.getUserId());
+        Assert.notNull(user, () -> new UserException(USER_NOT_EXIST));
+        Assert.isTrue(user.getState() == UserState.AUTH, () -> new UserException(USER_STATUS_IS_NOT_AUTH));
+
+        // 更新用户状态
+        user.auth(userActiveRequest.getBlockChainUrl(), userActiveRequest.getBlockChainPlatform());
+        boolean updateResult = this.updateById(user);
+        if (updateResult) {
+            // 写入流水
+            Long streamResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.ACTIVE);
+            Assert.notNull(streamResult, () -> new BizException(RepoErrorCode.INSERT_FAILED));
+
+            userOperatorResponse.setSuccess(true);
+        } else {
             userOperatorResponse.setSuccess(false);
             userOperatorResponse.setResponseCode(USER_OPERATE_FAILED.getCode());
             userOperatorResponse.setResponseMessage(USER_OPERATE_FAILED.getMessage());

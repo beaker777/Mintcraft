@@ -19,6 +19,7 @@
         <module>mint-craft-order</module>
         <module>mint-craft-trade</module>
         <module>mint-craft-pay</module>
+        <module>mint-craft-chain</module>
     </modules>
 
     <properties>

@@ -116,6 +116,15 @@ public class User extends BaseEntity {
         return this;
     }
 
+    public User active(String blockChainUrl, String blockChainPlatform) {
+        this.setBlockChainUrl(blockChainUrl);
+        this.setBlockChainPlatform(blockChainPlatform);
+        this.setState(UserState.ACTIVE);
+
+        return this;
+    }
+
+
     public boolean canModifyInfo() {
         return state == UserState.INIT || state == UserState.AUTH || state == UserState.ACTIVE;
     }

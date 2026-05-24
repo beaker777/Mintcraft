@@ -2,8 +2,13 @@ package com.beaker.mintcraft.user.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
+import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
+import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
+import com.beaker.mintcraft.api.chain.service.ChainFacadeService;
 import com.beaker.mintcraft.api.user.param.UserAuthParam;
 import com.beaker.mintcraft.api.user.param.UserModifyParam;
+import com.beaker.mintcraft.api.user.request.UserActiveRequest;
 import com.beaker.mintcraft.api.user.request.UserAuthRequest;
 import com.beaker.mintcraft.api.user.request.UserModifyRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
@@ -15,6 +20,7 @@ import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
 import com.beaker.mintcraft.user.domain.service.UserService;
 import com.beaker.mintcraft.user.infrastructure.exception.UserException;
 import com.beaker.mintcraft.web.vo.Result;
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +30,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 
+import static com.beaker.mintcraft.api.common.constant.CommonConstant.APP_NAME_UPPER;
+import static com.beaker.mintcraft.api.common.constant.CommonConstant.SEPARATOR;
 import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.*;
 
 /**
@@ -41,6 +49,9 @@ public class UserController {
 
     @Autowired
     private FileService fileService;
+
+    @Resource
+    private ChainFacadeService chainFacadeService;
 
     @GetMapping("/getUserInfo")
     public Result<UserInfo> getUserInfo() {
@@ -146,11 +157,47 @@ public class UserController {
         userAuthRequest.setIdCard(userAuthParam.getIdCard());
         UserOperatorResponse authResult = userService.auth(userAuthRequest);
 
+        // 实名认证成功, 进行上链
         if (authResult.getSuccess()) {
-            // TODO: 实名认证成功, 需要进行上链
-            return Result.success(true);
+            ChainProcessRequest chainCreateRequest = new ChainProcessRequest();
+
+            chainCreateRequest.setUserId(userId);
+            String identifier = APP_NAME_UPPER + SEPARATOR + authResult.getUserInfo().getUserRole() + SEPARATOR + authResult.getUserInfo().getUserId();
+            chainCreateRequest.setIdentifier(identifier);
+
+            ChainProcessResponse<ChainCreateData> chainProcessResponse = chainFacadeService.createAddr(chainCreateRequest);
+            if (chainProcessResponse.getSuccess()) {
+                // 第三方注册上链账户成功
+                ChainCreateData chainCreateData = chainProcessResponse.getData();
+
+                // 激活账户
+                UserActiveRequest userActiveRequest = new UserActiveRequest();
+                userActiveRequest.setUserId(Long.valueOf(userId));
+                userActiveRequest.setBlockChainUrl(chainCreateData.getAccount());
+                userActiveRequest.setBlockChainPlatform(chainCreateData.getPlatform());
+
+                UserOperatorResponse activeResponse = userService.active(userActiveRequest);
+                if (activeResponse.getSuccess()) {
+                    // 激活成功, 刷新 session 中的用户信息
+                    refreshUserInSession(userId);
+                    return Result.success(true);
+                }
+
+                // 激活账户失败
+                return Result.error(activeResponse.getResponseCode(), activeResponse.getResponseMessage());
+            } else {
+                // 创建链账户失败
+                throw new UserException(USER_CREATE_CHAIN_FAIL);
+            }
         }
 
         return Result.error(authResult.getResponseCode(), authResult.getResponseMessage());
+    }
+
+    private void refreshUserInSession(String userId) {
+        User user = userService.getById(userId);
+        UserInfo userInfo = UserConvertor.INSTANCE.mapToVO(user);
+
+        StpUtil.getSession().set(userInfo.getUserId().toString(), userInfo);
     }
 }
