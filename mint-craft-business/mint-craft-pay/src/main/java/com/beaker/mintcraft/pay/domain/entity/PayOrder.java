@@ -11,6 +11,7 @@ import com.beaker.mintcraft.api.pay.request.PayCreateRequest;
 import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
 import com.beaker.mintcraft.pay.domain.entity.convertor.PayOrderConvertor;
+import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -30,7 +31,7 @@ public class PayOrder extends BaseEntity {
     public static final int DEFAULT_TIME_OUT_MINUTES = 30;
 
     /**
-     * 支付单号
+     * 支付单号 snowflake 算法生成
      */
     private String payOrderId;
 
@@ -55,7 +56,7 @@ public class PayOrder extends BaseEntity {
     private UserType payeeType;
 
     /**
-     * 业务单号
+     * 业务单号 orderId
      */
     private String bizNo;
 
@@ -80,7 +81,7 @@ public class PayOrder extends BaseEntity {
     private BigDecimal refundedAmount;
 
     /**
-     * 外部支付流水号
+     * 外部支付流水号 UUID 生成
      */
     private String channelStreamId;
 
@@ -157,4 +158,14 @@ public class PayOrder extends BaseEntity {
         return this;
     }
 
+    public PayOrder paySuccess(PaySuccessEvent paySuccessEvent) {
+        Assert.equals(this.getOrderState(), PayOrderState.PAYING);
+
+        this.setOrderState(PayOrderState.PAID);
+        this.paySucceedTime = paySuccessEvent.getPaySucceedTime();
+        this.channelStreamId = paySuccessEvent.getChannelStreamId();
+        this.paidAmount = paySuccessEvent.getPaidAmount();
+
+        return this;
+    }
 }

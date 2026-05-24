@@ -77,4 +77,13 @@ public interface OrderFacadeService {
      * @return
      */
     public OrderResponse timeout(OrderTimeoutRequest request);
+
+
+    /**
+     * 订单支付成功
+     *
+     * @param request
+     * @return
+     */
+    public OrderResponse paySuccess(OrderPayRequest request);
 }

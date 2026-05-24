@@ -7,6 +7,7 @@ import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
 import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
+import com.beaker.mintcraft.api.order.request.OrderPayRequest;
 import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.pay.constant.PayChannel;
 import com.beaker.mintcraft.api.user.constant.UserType;
@@ -168,6 +169,16 @@ public class TradeOrder extends BaseEntity {
     }
 
     @JSONField(serialize = false)
+    public Boolean isPaid() {
+        return orderState == TradeOrderState.FINISH || orderState == TradeOrderState.PAID;
+    }
+
+    @JSONField(serialize = false)
+    public Boolean isConfirmed() {
+        return orderState == TradeOrderState.CONFIRM;
+    }
+
+    @JSONField(serialize = false)
     public Date getPayExpireTime() {
         return DateUtils.addMinutes(this.getGmtCreate(), TradeOrder.DEFAULT_TIME_OUT_MINUTES);
     }
@@ -194,6 +205,18 @@ public class TradeOrder extends BaseEntity {
     public TradeOrder close(BaseOrderUpdateRequest request) {
         this.setOrderClosedTime(request.getOperateTime());
         this.setCloseType(request.getOrderEvent().name());
+
+        TradeOrderState orderState = OrderStateMachine.INSTANCE.transition(this.getOrderState(), request.getOrderEvent());
+        this.setOrderState(orderState);
+
+        return this;
+    }
+
+    public TradeOrder paySuccess(OrderPayRequest request) {
+        this.setPayStreamId(request.getPayStreamId());
+        this.setPaySucceedTime(request.getOperateTime());
+        this.setPayChannel(request.getPayChannel());
+        this.setPaidAmount(request.getAmount());
 
         TradeOrderState orderState = OrderStateMachine.INSTANCE.transition(this.getOrderState(), request.getOrderEvent());
         this.setOrderState(orderState);

@@ -4,6 +4,7 @@ import com.alibaba.ttl.TransmittableThreadLocal;
 import com.alibaba.ttl.threadpool.TtlExecutors;
 import com.beaker.mintcraft.api.pay.constant.PayChannel;
 import com.beaker.mintcraft.base.utils.MoneyUtils;
+import com.beaker.mintcraft.pay.application.PayApplicationService;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
 import com.beaker.mintcraft.pay.infrastructure.channel.request.PayChannelRequest;
 import com.beaker.mintcraft.pay.infrastructure.channel.response.PayChannelResponse;
@@ -12,6 +13,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -29,7 +32,11 @@ import java.util.concurrent.TimeUnit;
  * @Description mock 支付渠道
  */
 @Slf4j
+@Service
 public class MockPayChannelService implements PayChannelService {
+
+    @Autowired
+    private PayApplicationService payApplicationService;
 
     public static TransmittableThreadLocal<Map> context = new TransmittableThreadLocal<>();
 
@@ -70,7 +77,7 @@ public class MockPayChannelService implements PayChannelService {
             paySuccessEvent.setPaySucceedTime(new Date());
             paySuccessEvent.setPayChannel(PayChannel.MOCK);
 
-            // TODO 调用 paySuccess
+            boolean paySuccessResult = payApplicationService.paySuccess(paySuccessEvent);
         } catch (Exception e) {
             log.error("notify error", e);
             return false;

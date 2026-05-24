@@ -98,4 +98,20 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
             default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
         };
     }
+
+    @Override
+    public GoodsSaleResponse paySuccess(GoodsSaleRequest request) {
+        GoodsSaleResponse response = new GoodsSaleResponse();
+
+        GoodsType goodsType = GoodsType.valueOf(request.getGoodsType());
+
+        switch (goodsType) {
+            case COLLECTION -> {
+                // TODO: 后续补充将藏品发放给用户
+                response.setSuccess(true);
+                return response;
+            }
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        }
+    }
 }

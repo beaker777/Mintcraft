@@ -144,6 +144,10 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
         return doExecute(request, tradeOrder -> tradeOrder.close(request));
     }
 
+    public OrderResponse paySuccess(OrderPayRequest request) {
+        return doExecute(request, tradeOrder -> tradeOrder.paySuccess(request));
+    }
+
     private TradeOrder doCreate(OrderCreateRequest request) {
         // 创建订单
         TradeOrder tradeOrder = TradeOrder.createOrder(request);

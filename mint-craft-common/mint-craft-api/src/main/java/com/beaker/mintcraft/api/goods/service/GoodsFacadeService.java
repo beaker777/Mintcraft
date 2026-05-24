@@ -49,4 +49,12 @@ public interface GoodsFacadeService {
      * @return
      */
     public GoodsStreamVO getGoodsInventoryStream(String goodsId, GoodsType goodsType, GoodsEvent goodsEvent, String identifier);
+
+    /**
+     * 支付成功
+     *
+     * @param request
+     * @return
+     */
+    GoodsSaleResponse paySuccess(GoodsSaleRequest request);
 }

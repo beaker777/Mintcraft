@@ -32,8 +32,7 @@ import org.apache.dubbo.config.annotation.DubboService;
 
 import java.util.List;
 
-import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.INVENTORY_DECREASE_FAILED;
-import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.ORDER_CREATE_VALID_FAILED;
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.*;
 
 /**
  * @Author beaker
@@ -167,6 +166,34 @@ public class OrderFacadeServiceImpl implements OrderFacadeService {
     @Override
     public OrderResponse timeout(OrderTimeoutRequest request) {
         return sendTransactionMsgForClose(request);
+    }
+
+    @Override
+    public OrderResponse paySuccess(OrderPayRequest request) {
+        OrderResponse orderResponse = orderManageService.paySuccess(request);
+
+        // 如果订单状态更新失败, 根据订单状态返回 error
+        if (!orderResponse.getSuccess()) {
+            TradeOrder existOrder = orderService.getOrder(request.getOrderId());
+
+            if (existOrder != null && existOrder.isClosed()) {
+                return new OrderResponse.OrderResponseBuilder()
+                        .orderId(existOrder.getOrderId())
+                        .buildFail(ORDER_ALREADY_CLOSED.getCode(), ORDER_ALREADY_CLOSED.getMessage());
+            }
+            if (existOrder != null && existOrder.isPaid()) {
+                // 如果订单已支付, 且由本次请求支付, 返回支付成功
+                if (existOrder.getPayStreamId().equals(request.getPayStreamId()) && existOrder.getPayChannel() == request.getPayChannel()) {
+                    return new OrderResponse.OrderResponseBuilder().orderId(existOrder.getOrderId()).buildSuccess();
+                } else {
+                    return new OrderResponse.OrderResponseBuilder()
+                            .orderId(existOrder.getOrderId())
+                            .buildFail(ORDER_ALREADY_PAID.getCode(), ORDER_ALREADY_PAID.getMessage());
+                }
+            }
+        }
+
+        return orderResponse;
     }
 
     private OrderResponse sendTransactionMsgForClose(BaseOrderUpdateRequest request) {

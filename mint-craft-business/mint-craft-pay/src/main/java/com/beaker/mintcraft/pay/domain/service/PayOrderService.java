@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.pay.domain.service;
 
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.pay.constant.PayOrderState;
 import com.beaker.mintcraft.api.pay.request.PayCreateRequest;
@@ -8,6 +9,7 @@ import com.beaker.mintcraft.api.pay.response.PayCreateResponse;
 import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.pay.domain.entity.PayOrder;
+import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
 import com.beaker.mintcraft.pay.infrastructure.mapper.PayOrderMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,5 +54,22 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         Assert.isTrue(saveResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
 
         return true;
+    }
+
+    public Boolean paySuccess(PaySuccessEvent paySuccessEvent) {
+        PayOrder payOrder = payOrderMapper.selectByPayOrderId(paySuccessEvent.getPayOrderId());
+        payOrder.paySuccess(paySuccessEvent);
+
+        boolean saveResult = saveOrUpdate(payOrder);
+        Assert.isTrue(saveResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+        return true;
+    }
+
+    public PayOrder queryByOrderId(String payOrderId) {
+        QueryWrapper<PayOrder> wrapper = new QueryWrapper<>();
+        wrapper.eq("pay_order_id", payOrderId);
+
+        return this.getOne(wrapper);
     }
 }
