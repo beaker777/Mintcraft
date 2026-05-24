@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.goods.facade;
 
+import com.beaker.mintcraft.api.collection.request.held.HeldCollectionCreateRequest;
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
 import com.beaker.mintcraft.api.goods.constant.GoodsEvent;
@@ -13,11 +14,14 @@ import com.beaker.mintcraft.api.goods.valobj.BaseGoodsVO;
 import com.beaker.mintcraft.api.goods.valobj.GoodsStreamVO;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.CollectionInventoryStream;
+import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
+import com.beaker.mintcraft.collection.domain.service.impl.HeldCollectionService;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionInventoryStreamMapper;
 import com.beaker.mintcraft.goods.domain.entity.convertor.GoodsStreamConvertor;
 import jakarta.annotation.Resource;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.springframework.beans.BeanUtils;
 
 /**
  * @Author beaker
@@ -29,6 +33,9 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
 
     @Resource
     private CollectionService collectionService;
+
+    @Resource
+    private HeldCollectionService heldCollectionService;
 
     @Resource
     private CollectionInventoryStreamMapper collectionInventoryStreamMapper;
@@ -105,13 +112,20 @@ public class GoodsFacadeServiceImpl implements GoodsFacadeService {
 
         GoodsType goodsType = GoodsType.valueOf(request.getGoodsType());
 
-        switch (goodsType) {
+        return switch (goodsType) {
             case COLLECTION -> {
-                // TODO: 后续补充将藏品发放给用户
+                HeldCollectionCreateRequest heldCollectionCreateRequest = new HeldCollectionCreateRequest();
+                BeanUtils.copyProperties(request, heldCollectionCreateRequest);
+                heldCollectionCreateRequest.setReferencePrice(request.getPurchasePrice());
+                heldCollectionCreateRequest.setSerialNoBaseId(request.getGoodsId().toString());
+
+                HeldCollection heldCollection = heldCollectionService.create(heldCollectionCreateRequest);
                 response.setSuccess(true);
-                return response;
+                response.setHeldCollectionId(heldCollection.getId());
+
+                yield response;
             }
             default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
-        }
+        };
     }
 }
