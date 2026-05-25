@@ -4,6 +4,7 @@ import com.beaker.mintcraft.api.chain.constant.ChainType;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
 import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
+import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
 import com.beaker.mintcraft.api.chain.service.ChainFacadeService;
 import com.beaker.mintcraft.chain.domain.service.ChainService;
 import com.beaker.mintcraft.chain.domain.service.factory.ChainServiceFactory;
@@ -35,6 +36,11 @@ public class ChainFacadeServiceImpl implements ChainFacadeService {
     @Override
     public ChainProcessResponse<ChainCreateData> createAddr(ChainProcessRequest request) {
         return getChainService().createAddr(request);
+    }
+
+    @Override
+    public ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request) {
+        return getChainService().mint(request);
     }
 
     private ChainService getChainService() {

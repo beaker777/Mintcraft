@@ -3,6 +3,7 @@ package com.beaker.mintcraft.chain.domain.service;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
 import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
+import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
 
 /**
  * @Author beaker
@@ -18,4 +19,14 @@ public interface ChainService {
      * @return
      */
     ChainProcessResponse<ChainCreateData> createAddr(ChainProcessRequest request);
+
+    /**
+     * 铸造藏品
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request);
+
+
 }

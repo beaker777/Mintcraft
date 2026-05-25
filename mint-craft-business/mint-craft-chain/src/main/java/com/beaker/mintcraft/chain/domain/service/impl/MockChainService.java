@@ -1,12 +1,18 @@
 package com.beaker.mintcraft.chain.domain.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
+import com.beaker.mintcraft.api.chain.constant.ChainOperateType;
 import com.beaker.mintcraft.api.chain.constant.ChainType;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
 import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
+import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
 import com.beaker.mintcraft.chain.domain.constant.ChainCode;
+import com.beaker.mintcraft.chain.domain.entity.ChainRequest;
+import com.beaker.mintcraft.chain.domain.response.ChainResponse;
 import com.beaker.mintcraft.chain.domain.service.AbstractChainService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -25,5 +31,59 @@ public class MockChainService extends AbstractChainService {
                 .data(new ChainCreateData(
                         request.getIdentifier(), UUID.randomUUID().toString(), "mockBlockChainName", ChainType.MOCK.name()))
                 .buildSuccess();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request) {
+        return doPostExecute(request, ChainOperateType.COLLECTION_MINT, chainRequest -> {
+        });
+    }
+
+    @Override
+    protected ChainResponse doPost(ChainRequest chainRequest) {
+        ChainResponse chainResponse = new ChainResponse();
+
+        chainResponse.setSuccess(true);
+
+        JSONObject data = new JSONObject();
+        data.put("success",true);
+        data.put("chainType","mock");
+        chainResponse.setData(data);
+
+        return chainResponse;
+    }
+
+    @Override
+    protected ChainResponse doDelete(ChainRequest chainRequest) {
+        ChainResponse chainResponse = new ChainResponse();
+
+        chainResponse.setSuccess(true);
+
+        JSONObject data = new JSONObject();
+        data.put("success",true);
+        data.put("chainType","mock");
+        chainResponse.setData(data);
+
+        return chainResponse;
+    }
+
+    @Override
+    protected ChainResponse doGetQuery(ChainRequest chainRequest) {
+        ChainResponse chainResponse = new ChainResponse();
+
+        chainResponse.setSuccess(true);
+
+        JSONObject data = new JSONObject();
+        data.put("success",true);
+        data.put("chainType","mock");
+        chainResponse.setData(data);
+
+        return chainResponse;
+    }
+
+    @Override
+    protected String chainType() {
+        return ChainType.MOCK.name();
     }
 }

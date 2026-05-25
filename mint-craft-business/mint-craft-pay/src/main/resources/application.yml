@@ -4,7 +4,7 @@ spring:
   application:
     name: mint-craft-pay
   config:
-    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:job.yml, optional:classpath:limiter.yml
+    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:job.yml, optional:classpath:limiter.yml, optional:classpath:seata.yml
 
 server:
   port: 8088

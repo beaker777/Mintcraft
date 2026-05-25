@@ -3,6 +3,7 @@ package com.beaker.mintcraft.pay.application;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson2.JSON;
 import com.beaker.mintcraft.api.collection.constant.GoodsSaleBizType;
+import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.goods.request.GoodsSaleRequest;
 import com.beaker.mintcraft.api.goods.response.GoodsSaleResponse;
 import com.beaker.mintcraft.api.goods.service.GoodsFacadeService;
@@ -17,6 +18,8 @@ import com.beaker.mintcraft.pay.domain.entity.PayOrder;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
 import com.beaker.mintcraft.pay.domain.service.PayOrderService;
 import com.beaker.mintcraft.rpc.support.RemoteCallWrapper;
+import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.transaction.TransactionHookManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -59,6 +62,7 @@ public class PayApplicationService {
      *      3、重试退款直到成功
      * </pre>
      */
+    @GlobalTransactional(rollbackFor = Exception.class)
     public boolean paySuccess(PaySuccessEvent paySuccessEvent) {
         PayOrder payOrder = payOrderService.queryByOrderId(paySuccessEvent.getPayOrderId());
 
@@ -94,7 +98,10 @@ public class PayApplicationService {
         GoodsSaleResponse goodsSaleResponse = RemoteCallWrapper
                 .call(req -> goodsFacadeService.paySuccess(req), goodsSaleRequest, "goodsFacadeService.confirmSale");
 
-        // TODO: 商品上链 -> Chain
+        // 如果商品类型是 COLLECTION 进行上链
+        if (tradeOrderVO.getGoodsType() == GoodsType.COLLECTION) {
+            TransactionHookManager.registerHook(new PaySuccessTransactionHook(goodsSaleResponse.getHeldCollectionId()));
+        }
 
         // 更新支付单状态
         Boolean result = payOrderService.paySuccess(paySuccessEvent);
