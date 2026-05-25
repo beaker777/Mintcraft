@@ -12,7 +12,6 @@ import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.api.pay.exception.PayErrorCode;
 import com.beaker.mintcraft.base.exception.biz.BizException;
-import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.pay.domain.entity.PayOrder;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;

@@ -49,3 +49,12 @@ mintcraft:
     appName: xxl-job-executor
     # 需要与在 xxl-job 上创建的 token 保持一致，这里需要改成你自己的
     accessToken: default_token
+
+  seata:
+    nacos:
+      # Seata 对应的 Nacos 保存配置的 data-id
+      data-id: seataServer.properties
+      # Seata 对应的 Nacos 保存配置的 group
+      group: seata
+      # Seata 对应的 Nacos 保存配置的 namespace
+      namespace: seata-server

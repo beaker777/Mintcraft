@@ -50,7 +50,7 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
     @Transactional(rollbackFor = Exception.class)
     public HeldCollection create(HeldCollectionCreateRequest request) {
         // 幂等校验
-        HeldCollection existHeldCollection = queryByCollectionIdAndSerialNo(request.getGoodsId(), request.getBizNo());
+        HeldCollection existHeldCollection = queryByCollectionIdAndBizNo(request.getGoodsId(), request.getBizNo());
         if (existHeldCollection != null) {
             return existHeldCollection;
         }
