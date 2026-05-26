@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.collection.domain.entity.convertor;
 
+import com.beaker.mintcraft.api.collection.model.HeldCollectionDTO;
 import com.beaker.mintcraft.api.collection.valobj.HeldCollectionVO;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import org.mapstruct.Mapper;
@@ -41,4 +42,11 @@ public interface HeldCollectionConvertor {
      * @return
      */
     public HeldCollection mapToEntity(HeldCollectionVO request);
+
+    /**
+     * 转换为 DTO
+     * @param request
+     * @return
+     */
+    public HeldCollectionDTO mapToDto(HeldCollection request);
 }

@@ -127,4 +127,13 @@ public class HeldCollection extends BaseEntity {
 
         return this;
     }
+
+    public HeldCollection actived(String nftId, String txHash) {
+        this.txHash = txHash;
+        this.nftId = nftId;
+        this.syncChainTime = new Date();
+        this.state = HeldCollectionState.ACTIVED;
+
+        return this;
+    }
 }

@@ -42,4 +42,13 @@ public class HeldCollectionStream extends BaseEntity {
 
         return this;
     }
+
+    public HeldCollectionStream generateForActive(Long heldCollectionId, String identifier) {
+        this.heldCollectionId = heldCollectionId;
+        this.streamType = HeldCollectionEventType.ACTIVE.name();
+        this.operator = PLATFORM.name();
+        this.identifier = identifier;
+
+        return this;
+    }
 }

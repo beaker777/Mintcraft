@@ -2,7 +2,7 @@ spring:
   application:
     name: mint-craft-goods
   config:
-    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:es.yml
+    import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:es.yml, optional:classpath:mq.yml
 
 server:
   port: 8099

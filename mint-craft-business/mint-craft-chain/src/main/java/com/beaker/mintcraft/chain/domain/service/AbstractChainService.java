@@ -2,15 +2,21 @@ package com.beaker.mintcraft.chain.domain.service;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.beaker.mintcraft.api.chain.constant.ChainOperateBizType;
 import com.beaker.mintcraft.api.chain.constant.ChainOperateType;
+import com.beaker.mintcraft.api.chain.constant.ChainType;
+import com.beaker.mintcraft.api.chain.model.ChainOperateBody;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
+import com.beaker.mintcraft.api.chain.request.ChainQueryRequest;
 import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
 import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
+import com.beaker.mintcraft.api.chain.response.data.ChainResultData;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.base.exception.system.SystemException;
 import com.beaker.mintcraft.base.utils.BeanValidator;
 import com.beaker.mintcraft.chain.domain.constant.ChainCode;
+import com.beaker.mintcraft.chain.domain.constant.ChainOperateState;
 import com.beaker.mintcraft.chain.domain.entity.ChainOperateInfo;
 import com.beaker.mintcraft.chain.domain.entity.ChainRequest;
 import com.beaker.mintcraft.chain.domain.response.ChainResponse;
@@ -18,6 +24,7 @@ import com.beaker.mintcraft.limiter.SlidingWindowRateLimiter;
 import com.beaker.mintcraft.mq.producer.StreamProducer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -96,15 +103,28 @@ public abstract class AbstractChainService implements ChainService {
                 throw new SystemException(RepoErrorCode.UPDATE_FAILED);
             }
 
+            // 构造返回结果
             ChainProcessResponse response = buildResult(result, chainProcessRequest, chainOperateTypeEnum);
             if (response.getSuccess() && chainOperateTypeEnum != ChainOperateType.USER_CREATE) {
-                //延迟5秒钟之后查询状态并发送 MQ 消息通知上游
+                //延迟 5 秒钟之后查询状态并发送 MQ 消息通知上游
                 scheduler.schedule(() -> {
                     try {
                         ChainOperateInfo operateInfo = chainOperateInfoService.queryByOutBizId(
                                 chainProcessRequest.getBizId(), chainProcessRequest.getBizType(), chainProcessRequest.getIdentifier());
 
-                        // TODO: 后续补充发送 MQ 消息
+                        ChainProcessResponse<ChainResultData> queryChainResult = queryChainResult(
+                                new ChainQueryRequest(chainProcessRequest.getIdentifier(), operateInfoId.toString()));
+
+                        // 如果链操作结果成功, 发送 MQ 消息
+                        if (queryChainResult.getSuccess() && queryChainResult.getData() != null) {
+                            if (StringUtils.equals(queryChainResult.getData().getState(), ChainOperateState.SUCCEED.name())) {
+                                // 发送消息
+                                this.sendMsg(operateInfo, queryChainResult.getData());
+
+                                // 更新流水
+                                chainOperateInfoService.updateResult(operateInfoId, ChainOperateState.SUCCEED, null);
+                            }
+                        }
                     } catch (Exception e) {
                         log.error("query chain result failed,", e);
                     }
@@ -170,6 +190,26 @@ public abstract class AbstractChainService implements ChainService {
                 .responseCode(result.getResponseCode())
                 .responseMessage(result.getResponseMessage())
                 .buildFailed();
+    }
+
+    /**
+     * 异步发送消息
+     *
+     * @param chainOperateInfo
+     * @param chainResultData
+     */
+    @Override
+    public void sendMsg(ChainOperateInfo chainOperateInfo, ChainResultData chainResultData) {
+        ChainOperateBody chainOperateBody = new ChainOperateBody();
+        chainOperateBody.setBizId(chainOperateInfo.getBizId());
+        chainOperateBody.setBizType(ChainOperateBizType.valueOf(chainOperateInfo.getBizType()));
+        chainOperateBody.setOperateInfoId(chainOperateInfo.getId());
+        chainOperateBody.setOperateType(ChainOperateType.valueOf(chainOperateInfo.getOperateType()));
+        chainOperateBody.setChainType(ChainType.valueOf(chainOperateInfo.getChainType()));
+        chainOperateBody.setChainResultData(chainResultData);
+
+        //消息监听：ChainOperateResultListener
+        streamProducer.send("chain-out-0", chainOperateInfo.getBizType(), JSON.toJSONString(chainOperateBody));
     }
 
 

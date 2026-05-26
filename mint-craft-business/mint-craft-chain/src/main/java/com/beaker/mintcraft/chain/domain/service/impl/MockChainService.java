@@ -4,10 +4,13 @@ import com.alibaba.fastjson2.JSONObject;
 import com.beaker.mintcraft.api.chain.constant.ChainOperateType;
 import com.beaker.mintcraft.api.chain.constant.ChainType;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
+import com.beaker.mintcraft.api.chain.request.ChainQueryRequest;
 import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
 import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
+import com.beaker.mintcraft.api.chain.response.data.ChainResultData;
 import com.beaker.mintcraft.chain.domain.constant.ChainCode;
+import com.beaker.mintcraft.chain.domain.constant.ChainOperateState;
 import com.beaker.mintcraft.chain.domain.entity.ChainRequest;
 import com.beaker.mintcraft.chain.domain.response.ChainResponse;
 import com.beaker.mintcraft.chain.domain.service.AbstractChainService;
@@ -38,6 +41,22 @@ public class MockChainService extends AbstractChainService {
     public ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request) {
         return doPostExecute(request, ChainOperateType.COLLECTION_MINT, chainRequest -> {
         });
+    }
+
+    @Override
+    public ChainProcessResponse<ChainResultData> queryChainResult(ChainQueryRequest request) {
+        ChainProcessResponse<ChainResultData> response = new ChainProcessResponse<>();
+        response.setSuccess(true);
+        response.setResponseCode("200");
+        response.setResponseMessage("SUCCESS");
+
+        ChainResultData data = new ChainResultData();
+        data.setTxHash(UUID.randomUUID().toString());
+        data.setNftId("nftId");
+        data.setState(ChainOperateState.SUCCEED.name());
+        response.setData(data);
+
+        return response;
     }
 
     @Override

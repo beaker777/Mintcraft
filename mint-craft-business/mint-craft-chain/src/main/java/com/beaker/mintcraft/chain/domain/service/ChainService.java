@@ -1,9 +1,12 @@
 package com.beaker.mintcraft.chain.domain.service;
 
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
+import com.beaker.mintcraft.api.chain.request.ChainQueryRequest;
 import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainCreateData;
 import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
+import com.beaker.mintcraft.api.chain.response.data.ChainResultData;
+import com.beaker.mintcraft.chain.domain.entity.ChainOperateInfo;
 
 /**
  * @Author beaker
@@ -28,5 +31,21 @@ public interface ChainService {
      */
     ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request);
 
+    /**
+     * 查询上链交易结果
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainResultData> queryChainResult(ChainQueryRequest request);
+
+
+    /**
+     * 发消息
+     *
+     * @param chainOperateInfo
+     * @param chainResultData
+     */
+    public void sendMsg(ChainOperateInfo chainOperateInfo, ChainResultData chainResultData);
 
 }
