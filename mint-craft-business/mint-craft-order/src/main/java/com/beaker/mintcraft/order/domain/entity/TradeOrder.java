@@ -7,6 +7,7 @@ import com.beaker.mintcraft.api.order.constant.TradeOrderEvent;
 import com.beaker.mintcraft.api.order.constant.TradeOrderState;
 import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
+import com.beaker.mintcraft.api.order.request.OrderFinishRequest;
 import com.beaker.mintcraft.api.order.request.OrderPayRequest;
 import com.beaker.mintcraft.api.order.request.base.BaseOrderUpdateRequest;
 import com.beaker.mintcraft.api.pay.constant.PayChannel;
@@ -217,6 +218,15 @@ public class TradeOrder extends BaseEntity {
         this.setPaySucceedTime(request.getOperateTime());
         this.setPayChannel(request.getPayChannel());
         this.setPaidAmount(request.getAmount());
+
+        TradeOrderState orderState = OrderStateMachine.INSTANCE.transition(this.getOrderState(), request.getOrderEvent());
+        this.setOrderState(orderState);
+
+        return this;
+    }
+
+    public TradeOrder finish(OrderFinishRequest request) {
+        this.setOrderFinishedTime(request.getOperateTime());
 
         TradeOrderState orderState = OrderStateMachine.INSTANCE.transition(this.getOrderState(), request.getOrderEvent());
         this.setOrderState(orderState);

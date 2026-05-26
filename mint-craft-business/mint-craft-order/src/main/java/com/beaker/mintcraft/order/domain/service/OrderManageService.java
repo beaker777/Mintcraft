@@ -144,9 +144,26 @@ public class OrderManageService extends ServiceImpl<OrderMapper, TradeOrder> {
         return doExecute(request, tradeOrder -> tradeOrder.close(request));
     }
 
+    /**
+     * 支付成功后回调 paySuccess
+     *
+     * @param request
+     * @return
+     */
     public OrderResponse paySuccess(OrderPayRequest request) {
         return doExecute(request, tradeOrder -> tradeOrder.paySuccess(request));
     }
+
+    /**
+     * 订单完结
+     *
+     * @param request
+     * @return
+     */
+    public OrderResponse finish(OrderFinishRequest request) {
+        return doExecute(request, tradeOrder -> tradeOrder.finish(request));
+    }
+
 
     private TradeOrder doCreate(OrderCreateRequest request) {
         // 创建订单
