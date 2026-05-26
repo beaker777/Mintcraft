@@ -6,6 +6,7 @@ import com.beaker.mintcraft.chain.domain.constant.ChainOperateState;
 import com.beaker.mintcraft.chain.domain.entity.ChainOperateInfo;
 import com.beaker.mintcraft.chain.infrastructure.mapper.ChainOperateInfoMapper;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -18,6 +19,9 @@ import java.util.List;
  */
 @Service
 public class ChainOperateInfoService extends ServiceImpl<ChainOperateInfoMapper, ChainOperateInfo> {
+
+    @Autowired
+    private ChainOperateInfoMapper chainOperateInfoMapper;
 
     public Long insertInfo(String chainType, String bizId, String bizType, String operateType, String param,String operationId) {
         ChainOperateInfo operateInfo = new ChainOperateInfo();
@@ -59,5 +63,21 @@ public class ChainOperateInfoService extends ServiceImpl<ChainOperateInfoMapper,
             return null;
         }
         return retList.getFirst();
+    }
+
+    public Long queryMinIdByState(String state) {
+        return chainOperateInfoMapper.queryMinIdByState(state);
+    }
+
+    public List<ChainOperateInfo> pageQueryOperateInfoByState(String state, int pageSize, Long minId) {
+        QueryWrapper<ChainOperateInfo> wrapper = new QueryWrapper<>();
+
+        // 包装查询条件
+        wrapper.eq("state", state);
+        wrapper.orderBy(true, true, "gmt_create");
+        wrapper.ge("id", minId);
+        wrapper.last("limit " + pageSize);
+
+        return this.list(wrapper);
     }
 }
