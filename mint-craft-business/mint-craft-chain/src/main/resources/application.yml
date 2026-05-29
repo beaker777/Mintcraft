@@ -5,6 +5,16 @@ spring:
     name: mint-craft-chain
   config:
     import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:stream.yml, optional:classpath:limiter.yml
+  cloud:
+    function:
+      definition: chain
+    stream:
+      bindings:
+        chain-out-0:
+          content-type: application/json
+          destination: chain-result-topic
+          group: chain-group
+          binder: rocketmq
 
 server:
   port: 8090

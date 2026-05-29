@@ -37,7 +37,7 @@ public class PayFacadeServiceImpl implements PayFacadeService {
     private PayChannelServiceFactory payChannelServiceFactory;
 
     @Override
-    @DistributeLock(keyExpression = "payCreateRequest.bizNo", scene = "GENERATE_PAY_URL")
+    @DistributeLock(keyExpression = "#payCreateRequest.bizNo", scene = "GENERATE_PAY_URL")
     public PayCreateResponse generatePayUrl(PayCreateRequest payCreateRequest) {
         PayCreateResponse response = new PayCreateResponse();
 

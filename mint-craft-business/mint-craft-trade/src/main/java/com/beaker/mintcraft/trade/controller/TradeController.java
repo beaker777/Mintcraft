@@ -231,6 +231,7 @@ public class TradeController {
             throw new TradeException(PAY_PERMISSION_DENIED);
         }
 
+        // 构造支付单创建请求
         PayCreateRequest payCreateRequest = new PayCreateRequest();
         payCreateRequest.setOrderAmount(tradeOrderVO.getOrderAmount());
         payCreateRequest.setBizNo(tradeOrderVO.getOrderId());

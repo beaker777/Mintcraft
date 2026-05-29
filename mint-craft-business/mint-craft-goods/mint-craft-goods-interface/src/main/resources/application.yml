@@ -3,6 +3,27 @@ spring:
     name: mint-craft-goods
   config:
     import: optional:classpath:base.yml, optional:classpath:datasource.yml, optional:classpath:rpc.yml, optional:classpath:cache.yml, optional:classpath:es.yml, optional:classpath:mq.yml
+  cloud:
+    function:
+      definition: chain;heldCollection
+    stream:
+      rocketmq:
+        binding:
+          chain-in-0:
+            consumer:
+              subscription:
+                expression: 'COLLECTION || BLIND_BOX'
+      bindings:
+        chain-in-0:
+          content-type: application/json
+          destination: chain-result-topic
+          group: chain-group
+          binder: rocketmq
+        heldCollection-out-0:
+          content-type: application/json
+          destination: held-collection-result-topic
+          group: held-collection-group
+          binder: rocketmq
 
 server:
   port: 8099

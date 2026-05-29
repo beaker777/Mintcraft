@@ -57,4 +57,4 @@ mintcraft:
       # Seata 对应的 Nacos 保存配置的 group
       group: seata
       # Seata 对应的 Nacos 保存配置的 namespace
-      namespace: seata-server
+      namespace: seata_server

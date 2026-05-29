@@ -7,7 +7,7 @@ spring:
     import: optional:classpath:base.yml, optional:classpath:rpc.yml, optional:classpath:datasource-sharding.yml, optional:classpath:cache.yml, optional:classpath:limiter.yml, optional:classpath:datasource-sharding.yml, optional:classpath:mq.yml, optional:classpath:job.yml
   cloud:
     function:
-      definition: newBuy;
+      definition: newBuy;heldCollection;
     stream:
       rocketmq:
         bindings:
@@ -15,6 +15,10 @@ spring:
             producer:
               producerType: Trans
               transactionListener: orderCloseTransactionListener
+          heldCollection-in-0:
+            consumer:
+              subscription:
+                expression: 'ACTIVE'
       bindings:
         newBuy-in-0:
           content-type: application/json
@@ -25,6 +29,11 @@ spring:
           content-type: application/json
           destination: order-close-topic
           group: order-group
+          binder: rocketmq
+        heldCollection-in-0:
+          content-type: application/json
+          destination: held-collection-result-topic
+          group: held-collection-group
           binder: rocketmq
   shardingsphere:
     rules:
