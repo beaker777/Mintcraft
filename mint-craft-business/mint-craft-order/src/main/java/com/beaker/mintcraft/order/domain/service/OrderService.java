@@ -74,9 +74,18 @@ public class OrderService extends ServiceImpl<OrderMapper, TradeOrder> {
         return this.page(page, wrapper);
     }
 
+    /**
+     * 分页查询超时订单
+     *
+     * @param pageSize
+     * @param buyerIdTailNumber
+     * @param minId
+     * @return
+     */
     public List<TradeOrder> pageQueryTimeoutOrders(int pageSize, @Nullable String buyerIdTailNumber, Long minId) {
-        // 包装查询条件
         QueryWrapper<TradeOrder> wrapper = new QueryWrapper<>();
+
+        // 包装查询条件
         wrapper.in("order_state", TradeOrderState.CREATE.name(), TradeOrderState.CONFIRM.name());
         wrapper.lt("gmt_create", DateUtils.addMinutes(new Date(), -TradeOrder.DEFAULT_TIME_OUT_MINUTES));
         if (buyerIdTailNumber != null) {
@@ -87,6 +96,23 @@ public class OrderService extends ServiceImpl<OrderMapper, TradeOrder> {
         }
         wrapper.orderBy(true, true, "gmt_create");
         wrapper.last("limit " + pageSize);
+
+        return this.list(wrapper);
+    }
+
+    public List<TradeOrder> pageQueryNeedConfirmOrders(int pageSize, @Nullable String buyerIdTailNumber, Long minId) {
+        QueryWrapper<TradeOrder> wrapper = new QueryWrapper<>();
+
+        // 包装查询条件
+        wrapper.isNull("order_confirmed_time");
+        if (buyerIdTailNumber != null) {
+            wrapper.likeLeft("buyer_id", buyerIdTailNumber);
+        }
+        if (minId != null) {
+            wrapper.ge("id", minId);
+        }
+        wrapper.orderBy(true, true, "gmt_create");
+        wrapper.last("limit" + pageSize);
 
         return this.list(wrapper);
     }

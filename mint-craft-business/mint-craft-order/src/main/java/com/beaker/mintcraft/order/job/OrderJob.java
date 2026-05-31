@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.order.job;
 
 import com.beaker.mintcraft.api.common.constant.BizOrderType;
+import com.beaker.mintcraft.api.order.request.OrderConfirmRequest;
 import com.beaker.mintcraft.api.order.request.OrderTimeoutRequest;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.pay.constant.PayOrderState;
@@ -50,6 +51,8 @@ public class OrderJob {
     private static final TradeOrder POISON = new TradeOrder();
 
     private final BlockingQueue<TradeOrder> orderTimeoutBlockingQueue = new LinkedBlockingQueue<>(CAPACITY);
+
+    private final BlockingQueue<TradeOrder> orderConfirmBlockingQueue = new LinkedBlockingQueue<>(CAPACITY);
 
     private final ForkJoinPool forkJoinPool = new ForkJoinPool(10);
 
@@ -110,6 +113,42 @@ public class OrderJob {
         }
     }
 
+    @XxlJob("orderConfirmExecute")
+    public ReturnT<String> orderConfirmExecute() {
+        int shardIndex = XxlJobHelper.getShardIndex();
+        int shardTotal = XxlJobHelper.getShardTotal();
+
+        LOG.info("orderConfirmExecute start to execute , shardIndex is {} , shardTotal is {}", shardIndex, shardTotal);
+
+        List<String> buyerIdTailNumberList = new ArrayList<>();
+        for (int i = 0; i <= MAX_TAIL_NUMBER; i++) {
+            if (i % shardTotal == shardIndex) {
+                buyerIdTailNumberList.add(StringUtils.leftPad(String.valueOf(i), 2, "0"));
+            }
+        }
+
+        buyerIdTailNumberList.forEach(buyerIdTailNumber -> {
+            try {
+                List<TradeOrder> tradeOrders = orderService.pageQueryNeedConfirmOrders(PAGE_SIZE, buyerIdTailNumber, null);
+                orderConfirmBlockingQueue.addAll(tradeOrders);
+
+                forkJoinPool.execute(this::executeConfirm);
+
+                while (CollectionUtils.isNotEmpty(tradeOrders)) {
+                    long maxId = tradeOrders.stream().mapToLong(TradeOrder::getId).max().orElse(Long.MAX_VALUE);
+
+                    tradeOrders = orderService.pageQueryNeedConfirmOrders(PAGE_SIZE, buyerIdTailNumber, maxId + 1);
+                    orderConfirmBlockingQueue.addAll(tradeOrders);
+                }
+            } finally {
+                orderConfirmBlockingQueue.add(POISON);
+                LOG.debug("POISON added to blocking queue ，buyerIdTailNumber is {}", buyerIdTailNumber);
+            }
+        });
+
+        return ReturnT.SUCCESS;
+    }
+
     private void executeTimeout() {
         TradeOrder tradeOrder = null;
         try {
@@ -132,6 +171,27 @@ public class OrderJob {
 
         LOG.debug("executeTimeout finish");
     }
+
+    private void executeConfirm() {
+        TradeOrder tradeOrder = null;
+        try {
+            while (true) {
+                tradeOrder = orderConfirmBlockingQueue.take();
+
+                // 获取到毒丸对象, 停止本次扫描
+                if (tradeOrder == POISON) {
+                    LOG.debug("POISON toked from blocking queue");
+                    break;
+                }
+
+                executeConfirmSingle(tradeOrder);
+            }
+        } catch (InterruptedException e) {
+            LOG.error("executeConfirm failed", e);
+        }
+        LOG.debug("executeConfirm finish");
+    }
+
 
     private void executeTimeoutSingle(TradeOrder tradeOrder) {
         // 查询订单是否已经支付成功
@@ -158,5 +218,22 @@ public class OrderJob {
 
             orderFacadeService.timeout(orderTimeoutRequest);
         }
+    }
+
+    private void executeConfirmSingle(TradeOrder tradeOrder) {
+        OrderConfirmRequest confirmRequest = new OrderConfirmRequest();
+
+        confirmRequest.setOperator(UserType.PLATFORM.name());
+        confirmRequest.setOperatorType(UserType.PLATFORM);
+        confirmRequest.setOrderId(tradeOrder.getOrderId());
+        confirmRequest.setIdentifier(tradeOrder.getIdentifier());
+        confirmRequest.setOperateTime(new Date());
+        confirmRequest.setOrderId(tradeOrder.getOrderId());
+        confirmRequest.setBuyerId(tradeOrder.getBuyerId());
+        confirmRequest.setItemCount(tradeOrder.getItemCount());
+        confirmRequest.setGoodsId(tradeOrder.getGoodsId());
+        confirmRequest.setGoodsType(tradeOrder.getGoodsType());
+
+        orderFacadeService.confirm(confirmRequest);
     }
 }
