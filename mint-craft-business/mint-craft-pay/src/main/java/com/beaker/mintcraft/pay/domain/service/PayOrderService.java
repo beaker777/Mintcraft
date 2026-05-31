@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @Author beaker
  * @Date 2026/5/23 15:47
@@ -77,9 +79,30 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         return true;
     }
 
+    public List<PayOrder> queryByBizNo(String bizNo, String bizOrderType, String payerId, PayOrderState payOrderState) {
+        QueryWrapper<PayOrder> wrapper = new QueryWrapper<>();
+
+        wrapper.eq("biz_no", bizNo);
+        wrapper.eq("biz_type", bizOrderType);
+        wrapper.eq("pay_id", payerId);
+        wrapper.eq("state", payOrderState.name());
+
+        return this.list(wrapper);
+    }
+
     public PayOrder queryByOrderId(String payOrderId) {
         QueryWrapper<PayOrder> wrapper = new QueryWrapper<>();
+
         wrapper.eq("pay_order_id", payOrderId);
+
+        return this.getOne(wrapper);
+    }
+
+    public PayOrder queryByOrderIdAndPayer(String payOrderId, String payerId) {
+        QueryWrapper<PayOrder> wrapper = new QueryWrapper<>();
+
+        wrapper.eq("pay_order_id", payOrderId);
+        wrapper.eq("payer_id", payerId);
 
         return this.getOne(wrapper);
     }

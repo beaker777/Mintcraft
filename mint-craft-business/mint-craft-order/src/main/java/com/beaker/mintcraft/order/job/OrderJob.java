@@ -1,8 +1,15 @@
 package com.beaker.mintcraft.order.job;
 
+import com.beaker.mintcraft.api.common.constant.BizOrderType;
 import com.beaker.mintcraft.api.order.request.OrderTimeoutRequest;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
+import com.beaker.mintcraft.api.pay.constant.PayOrderState;
+import com.beaker.mintcraft.api.pay.request.PayQueryRequest;
+import com.beaker.mintcraft.api.pay.request.condition.PayQueryByBizNo;
+import com.beaker.mintcraft.api.pay.service.PayFacadeService;
+import com.beaker.mintcraft.api.pay.valobj.PayOrderVO;
 import com.beaker.mintcraft.api.user.constant.UserType;
+import com.beaker.mintcraft.base.response.MultiResponse;
 import com.beaker.mintcraft.order.domain.entity.TradeOrder;
 import com.beaker.mintcraft.order.domain.service.OrderManageService;
 import com.beaker.mintcraft.order.domain.service.OrderService;
@@ -51,6 +58,9 @@ public class OrderJob {
 
     @Resource
     private OrderFacadeService orderFacadeService;
+
+    @Resource
+    private PayFacadeService payFacadeService;
 
     @Autowired
     private OrderManageService orderManageService;
@@ -124,17 +134,29 @@ public class OrderJob {
     }
 
     private void executeTimeoutSingle(TradeOrder tradeOrder) {
-        // TODO: 这里后续要对接支付模块
+        // 查询订单是否已经支付成功
+        PayQueryRequest payQueryRequest = new PayQueryRequest();
+        payQueryRequest.setPayerId(tradeOrder.getBuyerId());
+        payQueryRequest.setPayOrderState(PayOrderState.PAID);
 
-        LOG.info("start to execute order timeout , orderId is {}", tradeOrder.getOrderId());
+        PayQueryByBizNo payQueryByBizNo = new PayQueryByBizNo();
+        payQueryByBizNo.setBizNo(tradeOrder.getOrderId());
+        payQueryByBizNo.setBizType(BizOrderType.TRADE_ORDER.name());
+        payQueryRequest.setPayQueryCondition(payQueryByBizNo);
 
-        OrderTimeoutRequest orderTimeoutRequest = new OrderTimeoutRequest();
-        orderTimeoutRequest.setOrderId(tradeOrder.getOrderId());
-        orderTimeoutRequest.setOperateTime(new Date());
-        orderTimeoutRequest.setOperator(UserType.PLATFORM.name());
-        orderTimeoutRequest.setOperatorType(UserType.PLATFORM);
-        orderTimeoutRequest.setIdentifier(tradeOrder.getOrderId());
+        MultiResponse<PayOrderVO> payQueryResponse = payFacadeService.queryPayOrders(payQueryRequest);
 
-        orderFacadeService.timeout(orderTimeoutRequest);
+        if (payQueryResponse.getSuccess() && CollectionUtils.isEmpty(payQueryResponse.getDatas())) {
+            LOG.info("start to execute order timeout , orderId is {}", tradeOrder.getOrderId());
+
+            OrderTimeoutRequest orderTimeoutRequest = new OrderTimeoutRequest();
+            orderTimeoutRequest.setOrderId(tradeOrder.getOrderId());
+            orderTimeoutRequest.setOperateTime(new Date());
+            orderTimeoutRequest.setOperator(UserType.PLATFORM.name());
+            orderTimeoutRequest.setOperatorType(UserType.PLATFORM);
+            orderTimeoutRequest.setIdentifier(tradeOrder.getOrderId());
+
+            orderFacadeService.timeout(orderTimeoutRequest);
+        }
     }
 }

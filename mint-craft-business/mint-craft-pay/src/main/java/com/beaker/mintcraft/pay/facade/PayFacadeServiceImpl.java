@@ -3,13 +3,20 @@ package com.beaker.mintcraft.pay.facade;
 import cn.hutool.core.lang.Assert;
 import com.beaker.mintcraft.api.pay.constant.PayOrderState;
 import com.beaker.mintcraft.api.pay.request.PayCreateRequest;
+import com.beaker.mintcraft.api.pay.request.PayQueryRequest;
+import com.beaker.mintcraft.api.pay.request.condition.PayQueryByBizNo;
+import com.beaker.mintcraft.api.pay.request.condition.PayQueryCondition;
 import com.beaker.mintcraft.api.pay.response.PayCreateResponse;
 import com.beaker.mintcraft.api.pay.service.PayFacadeService;
+import com.beaker.mintcraft.api.pay.valobj.PayOrderVO;
 import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
+import com.beaker.mintcraft.base.response.MultiResponse;
+import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.base.utils.MoneyUtils;
 import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.pay.domain.entity.PayOrder;
+import com.beaker.mintcraft.pay.domain.entity.convertor.PayOrderConvertor;
 import com.beaker.mintcraft.pay.domain.service.PayOrderService;
 import com.beaker.mintcraft.pay.infrastructure.channel.request.PayChannelRequest;
 import com.beaker.mintcraft.pay.infrastructure.channel.response.PayChannelResponse;
@@ -17,6 +24,8 @@ import com.beaker.mintcraft.pay.infrastructure.channel.service.PayChannelService
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.dubbo.config.annotation.DubboService;
+
+import java.util.List;
 
 import static com.beaker.mintcraft.api.pay.exception.PayErrorCode.ORDER_IS_ALREADY_PAID;
 
@@ -78,6 +87,30 @@ public class PayFacadeServiceImpl implements PayFacadeService {
         }
 
         return response;
+    }
+
+    @Override
+    public MultiResponse<PayOrderVO> queryPayOrders(PayQueryRequest payQueryRequest) {
+        PayQueryCondition payQueryCondition = payQueryRequest.getPayQueryCondition();
+
+        if (payQueryCondition instanceof PayQueryByBizNo payQueryByBizNo) {
+            List<PayOrder> payOrders = payOrderService.queryByBizNo(payQueryByBizNo.getBizNo(), payQueryByBizNo.getBizType(),
+                    payQueryRequest.getPayerId(), payQueryRequest.getPayOrderState());
+
+            return MultiResponse.of(PayOrderConvertor.INSTANCE.mapToVo(payOrders));
+        }
+
+        throw new UnsupportedOperationException("unsupported condition" + payQueryCondition);
+    }
+
+    @Override
+    public SingleResponse<PayOrderVO> queryPayOrder(String payOrderId) {
+        return SingleResponse.of(PayOrderConvertor.INSTANCE.mapToVo(payOrderService.queryByOrderId(payOrderId)));
+    }
+
+    @Override
+    public SingleResponse<PayOrderVO> queryPayOrder(String payOrderId, String payerId) {
+        return SingleResponse.of(PayOrderConvertor.INSTANCE.mapToVo(payOrderService.queryByOrderIdAndPayer(payOrderId, payerId)));
     }
 
     private PayChannelResponse doPay(PayCreateRequest payCreateRequest, PayOrder payOrder) {
