@@ -1,7 +1,9 @@
 package com.beaker.mintcraft.pay.infrastructure.channel.service;
 
 import com.beaker.mintcraft.pay.infrastructure.channel.request.PayChannelRequest;
+import com.beaker.mintcraft.pay.infrastructure.channel.request.RefundChannelRequest;
 import com.beaker.mintcraft.pay.infrastructure.channel.response.PayChannelResponse;
+import com.beaker.mintcraft.pay.infrastructure.channel.response.RefundChannelResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -29,4 +31,20 @@ public interface PayChannelService {
      */
     boolean notify(HttpServletRequest request, HttpServletResponse response);
 
+    /**
+     * 退款
+     *
+     * @param refundChannelRequest
+     * @return
+     */
+    RefundChannelResponse refund(RefundChannelRequest refundChannelRequest);
+
+    /**
+     * 退款结果回调
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    boolean refundNotify(HttpServletRequest request, HttpServletResponse response);
 }

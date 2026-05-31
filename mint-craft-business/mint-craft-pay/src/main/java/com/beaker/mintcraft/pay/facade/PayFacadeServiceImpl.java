@@ -2,7 +2,6 @@ package com.beaker.mintcraft.pay.facade;
 
 import cn.hutool.core.lang.Assert;
 import com.beaker.mintcraft.api.pay.constant.PayOrderState;
-import com.beaker.mintcraft.api.pay.exception.PayErrorCode;
 import com.beaker.mintcraft.api.pay.request.PayCreateRequest;
 import com.beaker.mintcraft.api.pay.response.PayCreateResponse;
 import com.beaker.mintcraft.api.pay.service.PayFacadeService;
@@ -18,7 +17,6 @@ import com.beaker.mintcraft.pay.infrastructure.channel.service.PayChannelService
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.beaker.mintcraft.api.pay.exception.PayErrorCode.ORDER_IS_ALREADY_PAID;
 

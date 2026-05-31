@@ -12,6 +12,7 @@ import com.beaker.mintcraft.api.user.constant.UserType;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
 import com.beaker.mintcraft.pay.domain.entity.convertor.PayOrderConvertor;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
+import com.beaker.mintcraft.pay.domain.event.RefundSuccessEvent;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -165,6 +166,16 @@ public class PayOrder extends BaseEntity {
         this.paySucceedTime = paySuccessEvent.getPaySucceedTime();
         this.channelStreamId = paySuccessEvent.getChannelStreamId();
         this.paidAmount = paySuccessEvent.getPaidAmount();
+
+        return this;
+    }
+
+    public PayOrder refundSuccess(RefundSuccessEvent refundSuccessEvent) {
+        Assert.equals(this.getOrderState(), PayOrderState.PAID);
+
+        this.setOrderState(PayOrderState.REFUNDED);
+        this.refundChannelStreamId = refundSuccessEvent.getChannelStreamId();
+        this.refundedAmount = refundSuccessEvent.getRefundedAmount();
 
         return this;
     }

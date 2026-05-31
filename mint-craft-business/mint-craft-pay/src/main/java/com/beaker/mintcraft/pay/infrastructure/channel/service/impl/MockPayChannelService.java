@@ -6,8 +6,11 @@ import com.beaker.mintcraft.api.pay.constant.PayChannel;
 import com.beaker.mintcraft.base.utils.MoneyUtils;
 import com.beaker.mintcraft.pay.application.PayApplicationService;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
+import com.beaker.mintcraft.pay.domain.event.RefundSuccessEvent;
 import com.beaker.mintcraft.pay.infrastructure.channel.request.PayChannelRequest;
+import com.beaker.mintcraft.pay.infrastructure.channel.request.RefundChannelRequest;
 import com.beaker.mintcraft.pay.infrastructure.channel.response.PayChannelResponse;
+import com.beaker.mintcraft.pay.infrastructure.channel.response.RefundChannelResponse;
 import com.beaker.mintcraft.pay.infrastructure.channel.service.PayChannelService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,7 +80,48 @@ public class MockPayChannelService implements PayChannelService {
             paySuccessEvent.setPaySucceedTime(new Date());
             paySuccessEvent.setPayChannel(PayChannel.MOCK);
 
-            boolean paySuccessResult = payApplicationService.paySuccess(paySuccessEvent);
+            payApplicationService.paySuccess(paySuccessEvent);
+        } catch (Exception e) {
+            log.error("notify error", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public RefundChannelResponse refund(RefundChannelRequest refundChannelRequest) {
+        RefundChannelResponse refundChannelResponse = new RefundChannelResponse();
+        refundChannelResponse.setSuccess(true);
+
+        Map<String, Serializable> params = new HashMap<>();
+        params.put("payOrderId", refundChannelRequest.getPayOrderId());
+        params.put("refundOrderId", refundChannelRequest.getRefundOrderId());
+        params.put("refundAmount", refundChannelRequest.getRefundAmount());
+        context.set(params);
+
+        // 异步线程延迟 3s 后调用 notify 方法.
+        scheduler.schedule(() -> {
+            this.refundNotify(null, null);
+        },3, TimeUnit.SECONDS);
+
+        return refundChannelResponse;
+    }
+
+    @Override
+    public boolean refundNotify(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            RefundSuccessEvent refundSuccessEvent = new RefundSuccessEvent();
+            refundSuccessEvent.setChannelStreamId(UUID.randomUUID().toString());
+
+            Map<String, Serializable> params = (Map<String, Serializable>) context.get();
+            refundSuccessEvent.setRefundOrderId((String) params.get("refundOrderId"));
+            refundSuccessEvent.setPayOrderId((String) params.get("payOrderId"));
+            refundSuccessEvent.setRefundedAmount(MoneyUtils.centToYuan((Long) params.get("refundAmount")));
+            refundSuccessEvent.setRefundedTime(new Date());
+            refundSuccessEvent.setRefundChannel(PayChannel.MOCK);
+
+            payApplicationService.refundSuccess(refundSuccessEvent);
         } catch (Exception e) {
             log.error("notify error", e);
             return false;

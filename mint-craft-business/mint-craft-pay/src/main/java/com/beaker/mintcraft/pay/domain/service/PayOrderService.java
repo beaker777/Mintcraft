@@ -10,6 +10,7 @@ import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.pay.domain.entity.PayOrder;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
+import com.beaker.mintcraft.pay.domain.event.RefundSuccessEvent;
 import com.beaker.mintcraft.pay.infrastructure.mapper.PayOrderMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,16 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
     public Boolean paySuccess(PaySuccessEvent paySuccessEvent) {
         PayOrder payOrder = payOrderMapper.selectByPayOrderId(paySuccessEvent.getPayOrderId());
         payOrder.paySuccess(paySuccessEvent);
+
+        boolean saveResult = saveOrUpdate(payOrder);
+        Assert.isTrue(saveResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+        return true;
+    }
+
+    public Boolean refundSuccess(RefundSuccessEvent refundSuccessEvent) {
+        PayOrder payOrder = payOrderMapper.selectByPayOrderId(refundSuccessEvent.getPayOrderId());
+        payOrder.refundSuccess(refundSuccessEvent);
 
         boolean saveResult = saveOrUpdate(payOrder);
         Assert.isTrue(saveResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));

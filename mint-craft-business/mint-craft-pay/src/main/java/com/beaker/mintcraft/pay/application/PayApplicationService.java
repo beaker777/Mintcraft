@@ -12,17 +12,27 @@ import com.beaker.mintcraft.api.order.response.OrderResponse;
 import com.beaker.mintcraft.api.order.service.OrderFacadeService;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
 import com.beaker.mintcraft.api.pay.exception.PayErrorCode;
+import com.beaker.mintcraft.api.pay.request.RefundCreateRequest;
 import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.response.SingleResponse;
+import com.beaker.mintcraft.base.utils.MoneyUtils;
 import com.beaker.mintcraft.pay.domain.entity.PayOrder;
+import com.beaker.mintcraft.pay.domain.entity.RefundOrder;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
+import com.beaker.mintcraft.pay.domain.event.RefundSuccessEvent;
 import com.beaker.mintcraft.pay.domain.service.PayOrderService;
+import com.beaker.mintcraft.pay.domain.service.RefundOrderService;
+import com.beaker.mintcraft.pay.infrastructure.channel.request.RefundChannelRequest;
+import com.beaker.mintcraft.pay.infrastructure.channel.response.RefundChannelResponse;
+import com.beaker.mintcraft.pay.infrastructure.channel.service.PayChannelServiceFactory;
 import com.beaker.mintcraft.rpc.support.RemoteCallWrapper;
 import io.seata.spring.annotation.GlobalTransactional;
 import io.seata.tm.api.transaction.TransactionHookManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.ORDER_ALREADY_CLOSED;
 import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.ORDER_ALREADY_PAID;
@@ -40,10 +50,19 @@ public class PayApplicationService {
     private PayOrderService payOrderService;
 
     @Autowired
+    private RefundOrderService refundOrderService;
+
+    @Autowired
+    @Lazy
+    private PayChannelServiceFactory payChannelServiceFactory;
+
+    @Autowired
     private OrderFacadeService orderFacadeService;
 
     @Autowired
     private GoodsFacadeService goodsFacadeService;
+
+    private static final String REFUND_MEMO_PREFIX = "退款:";
 
     /**
      * 支付成功
@@ -84,7 +103,14 @@ public class PayApplicationService {
         if (needChargeBack(orderResponse)) {
             log.info("order already paid, do chargeback," + payOrder.getBizNo());
 
-            // TODO: 退款补偿
+            // 先推进支付单状态
+            Boolean result = payOrderService.paySuccess(paySuccessEvent);
+            Assert.isTrue(result, () -> new BizException(PayErrorCode.PAY_SUCCESS_NOTICE_FAILED));
+
+            // 异步退款
+            doChargeBack(paySuccessEvent, tradeOrderVO);
+
+            return true;
         }
 
         // 订单状态更新失败
@@ -108,6 +134,60 @@ public class PayApplicationService {
         Assert.isTrue(result, () -> new BizException(PayErrorCode.PAY_SUCCESS_NOTICE_FAILED));
 
         return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public boolean refundSuccess(RefundSuccessEvent refundSuccessEvent) {
+        RefundOrder refundOrder = refundOrderService.queryByOrderId(refundSuccessEvent.getRefundOrderId());
+
+        // 幂等校验
+        if (refundOrder.isRefunded()) {
+            return true;
+        }
+
+        // 更新支付单和退款单状态
+        boolean refundResult = payOrderService.refundSuccess(refundSuccessEvent) && refundOrderService.refundSuccess(refundSuccessEvent);
+        Assert.isTrue(refundResult, () -> new BizException(PayErrorCode.REFUND_SUCCESS_NOTICE_FAILED));
+
+        return true;
+    }
+
+    private boolean needChargeBack(OrderResponse orderResponse) {
+        return orderResponse.getResponseCode() != null
+                && (orderResponse.getResponseCode().equals(ORDER_ALREADY_PAID.getCode())
+                || orderResponse.getResponseCode().equals(ORDER_ALREADY_CLOSED.getCode()));
+    }
+
+    private void doChargeBack(PaySuccessEvent paySuccessEvent, TradeOrderVO tradeOrderVO) {
+        RefundCreateRequest refundCreateRequest = new RefundCreateRequest();
+        refundCreateRequest.setIdentifier(paySuccessEvent.getChannelStreamId());
+        refundCreateRequest.setMemo(REFUND_MEMO_PREFIX + tradeOrderVO.getOrderId());
+        refundCreateRequest.setPayOrderId(paySuccessEvent.getPayOrderId());
+        refundCreateRequest.setRefundAmount(paySuccessEvent.getPaidAmount());
+        refundCreateRequest.setRefundChannel(paySuccessEvent.getPayChannel());
+
+        // 创建退款单, 状态为 TO_REFUND
+        RefundOrder refundOrder = refundOrderService.create(refundCreateRequest);
+        Assert.notNull(refundOrder, () -> new BizException(PayErrorCode.REFUND_CREATE_FAILED));
+
+        // 异步退款, TODO: 失败后交给定时任务重试
+        Thread.ofVirtual().start(() -> {
+            RefundChannelRequest refundChannelRequest = new RefundChannelRequest();
+            refundChannelRequest.setRefundOrderId(refundOrder.getRefundOrderId());
+            refundChannelRequest.setPaidAmount(MoneyUtils.yuanToCent(refundOrder.getPaidAmount()));
+            refundChannelRequest.setPayChannelStreamId(refundOrder.getPayChannelStreamId());
+            refundChannelRequest.setPayOrderId(refundOrder.getPayOrderId());
+            refundChannelRequest.setRefundAmount(MoneyUtils.yuanToCent(refundOrder.getApplyRefundAmount()));
+            refundChannelRequest.setRefundReason(refundOrder.getMemo());
+
+            // 调用第三方服务, 进行异步退款
+            RefundChannelResponse response = payChannelServiceFactory.get(paySuccessEvent.getPayChannel()).refund(refundChannelRequest);
+
+            // 推进退款单状态为 Refunding
+            if (response.getSuccess()) {
+                refundOrderService.refunding(refundOrder.getRefundOrderId());
+            }
+        });
     }
 
     private OrderPayRequest getOrderPayRequest(PaySuccessEvent paySuccessEvent, PayOrder payOrder) {
@@ -138,11 +218,5 @@ public class PayApplicationService {
         goodsSaleRequest.setPurchasePrice(tradeOrderVO.getItemPrice());
 
         return goodsSaleRequest;
-    }
-
-    private boolean needChargeBack(OrderResponse orderResponse) {
-        return orderResponse.getResponseCode() != null
-                && (orderResponse.getResponseCode().equals(ORDER_ALREADY_PAID.getCode())
-                || orderResponse.getResponseCode().equals(ORDER_ALREADY_CLOSED.getCode()));
     }
 }
