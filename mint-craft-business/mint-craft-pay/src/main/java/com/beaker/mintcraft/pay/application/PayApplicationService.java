@@ -170,7 +170,7 @@ public class PayApplicationService {
         RefundOrder refundOrder = refundOrderService.create(refundCreateRequest);
         Assert.notNull(refundOrder, () -> new BizException(PayErrorCode.REFUND_CREATE_FAILED));
 
-        // 异步退款, TODO: 失败后交给定时任务重试
+        // 异步退款, 失败后交给定时任务重试
         Thread.ofVirtual().start(() -> {
             RefundChannelRequest refundChannelRequest = new RefundChannelRequest();
             refundChannelRequest.setRefundOrderId(refundOrder.getRefundOrderId());
