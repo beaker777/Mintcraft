@@ -5,14 +5,17 @@ import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.entity.CollectionInventoryStream;
+import com.beaker.mintcraft.collection.domain.entity.CollectionStream;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import com.beaker.mintcraft.collection.infrastructure.exception.CollectionException;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionInventoryStreamMapper;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionMapper;
+import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionStreamMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +35,30 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
     private CollectionInventoryStreamMapper collectionInventoryStreamMapper;
 
     @Autowired
+    private CollectionStreamMapper collectionStreamMapper;
+
+    @Autowired
     private CollectionMapper collectionMapper;
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Collection create(CollectionCreateRequest request) {
+        // 创建藏品
+        Collection collection = Collection.create(request);
+
+        // 保存藏品
+        boolean saveResult = this.save(collection);
+        Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_SAVE_FAILED));
+
+        // TODO: 补充快照相关逻辑
+
+        // 保存藏品操作流水
+        CollectionStream stream = new CollectionStream(collection, request.getIdentifier(), request.getEventType());
+        saveResult = collectionStreamMapper.insert(stream) == 1;
+        Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
+
+        return collection;
+    }
 
     @Override
     @Cached(name = ":collection:cache:id:", expire = 60, localExpire = 10, timeUnit = TimeUnit.MINUTES, cacheType = CacheType.BOTH, key = "args[0]", cacheNullValue = true)

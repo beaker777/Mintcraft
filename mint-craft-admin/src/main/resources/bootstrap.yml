@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: mint-craft-admin
+  config:
+    import: optional:classpath:base.yml, optional:classpath:config.yml

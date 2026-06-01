@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.chain.domain.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.beaker.mintcraft.api.chain.constant.ChainOperateBizType;
 import com.beaker.mintcraft.api.chain.constant.ChainOperateType;
 import com.beaker.mintcraft.api.chain.constant.ChainType;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
@@ -14,6 +15,7 @@ import com.beaker.mintcraft.chain.domain.constant.ChainOperateState;
 import com.beaker.mintcraft.chain.domain.entity.ChainRequest;
 import com.beaker.mintcraft.chain.domain.response.ChainResponse;
 import com.beaker.mintcraft.chain.domain.service.AbstractChainService;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +39,23 @@ public class MockChainService extends AbstractChainService {
     }
 
     @Override
+    public ChainProcessResponse<ChainOperationData> chain(ChainProcessRequest request) {
+        if (StringUtils.equals(ChainOperateBizType.BLIND_BOX.name(), request.getBizType())) {
+            return doPostExecute(request, ChainOperateType.BLIND_BOX_CHAIN, chainRequest -> {
+
+            });
+        } else {
+            return doPostExecute(request, ChainOperateType.COLLECTION_CHAIN, chainRequest -> {
+
+            });
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request) {
         return doPostExecute(request, ChainOperateType.COLLECTION_MINT, chainRequest -> {
+
         });
     }
 

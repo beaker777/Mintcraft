@@ -14,6 +14,7 @@
         <module>mint-craft-business</module>
         <module>mint-craft-auth</module>
         <module>mint-craft-gateway</module>
+        <module>mint-craft-admin</module>
     </modules>
 
     <properties>

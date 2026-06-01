@@ -2,6 +2,8 @@ package com.beaker.mintcraft.collection.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.beaker.mintcraft.api.collection.constant.CollectionState;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
+import com.beaker.mintcraft.collection.domain.entity.convertor.CollectionConvertor;
 import com.beaker.mintcraft.datasource.domain.entity.BaseEntity;
 import lombok.Data;
 import org.dromara.easyes.annotation.IndexName;
@@ -115,4 +117,19 @@ public class Collection extends BaseEntity {
     @Field(name = "can_book", type = FieldType.Integer)
     private Integer canBook;
 
+    public static Collection create(CollectionCreateRequest request) {
+        Collection collection = CollectionConvertor.INSTANCE.mapToEntity(request);
+
+        collection.setSaleableInventory(request.getQuantity());
+        collection.setState(CollectionState.INIT);
+        collection.setVersion(1);
+
+        return collection;
+    }
+
+    public Collection remove() {
+        this.state = CollectionState.REMOVED;
+
+        return this;
+    }
 }

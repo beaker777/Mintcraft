@@ -39,6 +39,11 @@ public class ChainFacadeServiceImpl implements ChainFacadeService {
     }
 
     @Override
+    public ChainProcessResponse<ChainOperationData> chain(ChainProcessRequest request) {
+        return getChainService().chain(request);
+    }
+
+    @Override
     public ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request) {
         return getChainService().mint(request);
     }

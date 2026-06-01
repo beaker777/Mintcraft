@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.collection.domain.entity.convertor;
 
 import com.beaker.mintcraft.api.collection.constant.CollectionState;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
 import com.beaker.mintcraft.api.goods.constant.GoodsState;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
@@ -49,6 +50,15 @@ public interface CollectionConvertor {
     @Mapping(target = "saleableInventory", source = "request.inventory")
     @Mapping(target = "state", ignore = true)
     public Collection mapToEntity(CollectionVO request);
+
+    /**
+     * 转换为实体
+     *
+     * @param request
+     * @return
+     */
+    public Collection mapToEntity(CollectionCreateRequest request);
+
 
     /**
      * 设置状态

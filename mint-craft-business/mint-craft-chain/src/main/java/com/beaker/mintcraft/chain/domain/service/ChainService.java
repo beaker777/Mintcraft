@@ -24,6 +24,14 @@ public interface ChainService {
     ChainProcessResponse<ChainCreateData> createAddr(ChainProcessRequest request);
 
     /**
+     * 上链藏品
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainOperationData> chain(ChainProcessRequest request);
+
+    /**
      * 铸造藏品
      *
      * @param request

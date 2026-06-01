@@ -1,5 +1,7 @@
 package com.beaker.mintcraft.collection.domain.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
@@ -10,7 +12,15 @@ import com.beaker.mintcraft.collection.domain.entity.Collection;
  * @Date 2026/5/10 18:01
  * @Description 藏品服务接口
  */
-public interface CollectionService {
+public interface CollectionService extends IService<Collection> {
+
+    /**
+     * 创建
+     *
+     * @param request
+     * @return
+     */
+    public Collection create(CollectionCreateRequest request);
 
     /**
      * 查询

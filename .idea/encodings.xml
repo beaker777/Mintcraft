@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/mint-craft-admin/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-auth/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-chain/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/mint-craft-business/mint-craft-goods/mint-craft-collection/src/main/java" charset="UTF-8" />
