@@ -2,6 +2,10 @@ package com.beaker.mintcraft.collection.domain.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyInventoryRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyPriceRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionRemoveRequest;
+import com.beaker.mintcraft.api.collection.response.CollectionInventoryModifyResponse;
 import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
@@ -21,6 +25,30 @@ public interface CollectionService extends IService<Collection> {
      * @return
      */
     public Collection create(CollectionCreateRequest request);
+
+    /**
+     * 更新库存
+     *
+     * @param request
+     * @return
+     */
+    public CollectionInventoryModifyResponse modifyInventory(CollectionModifyInventoryRequest request);
+
+    /**
+     * 更新价格
+     *
+     * @param request
+     * @return
+     */
+    public Boolean modifyPrice(CollectionModifyPriceRequest request);
+
+    /**
+     * 下架
+     *
+     * @param request
+     * @return
+     */
+    public Boolean remove(CollectionRemoveRequest request);
 
     /**
      * 查询

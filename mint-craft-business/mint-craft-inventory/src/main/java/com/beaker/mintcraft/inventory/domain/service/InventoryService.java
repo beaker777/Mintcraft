@@ -46,6 +46,14 @@ public interface InventoryService {
     public InventoryResponse increase(InventoryRequest request);
 
     /**
+     * 失效藏品库存
+     *
+     * @param request
+     * @return
+     */
+    public void invalid(InventoryRequest request);
+
+    /**
      * 移除库存操作日志
      * @param request
      * @return

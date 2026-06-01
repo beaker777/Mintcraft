@@ -17,6 +17,8 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 import static com.beaker.mintcraft.base.response.ResponseCode.BIZ_ERROR;
@@ -165,6 +167,19 @@ public abstract class AbstractInventoryServiceImpl implements InventoryService {
             inventoryResponse.setResponseMessage(e.getMessage());
 
             return inventoryResponse;
+        }
+    }
+
+    @Override
+    public void invalid(InventoryRequest request) {
+        // 清除缓存
+        if (redissonClient.getBucket(getInventoryDecreaseLog(request)).isExists()) {
+            redissonClient.getBucket(getCacheKey(request)).delete();
+        }
+
+        // 让流水记录 24 小时后过期, 避免对账出现问题
+        if (redissonClient.getBucket(getCacheStreamKey(request)).isExists()) {
+            redissonClient.getBucket(getCacheStreamKey(request)).expire(Instant.now().plus(24, ChronoUnit.HOURS));
         }
     }
 

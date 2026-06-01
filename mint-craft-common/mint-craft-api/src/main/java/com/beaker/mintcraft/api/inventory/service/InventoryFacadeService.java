@@ -45,6 +45,14 @@ public interface InventoryFacadeService {
     public SingleResponse<Boolean> increase(InventoryRequest inventoryRequest);
 
     /**
+     * 库存失效
+     *
+     * @param inventoryRequest
+     * @return
+     */
+    public SingleResponse<Void> invalid(InventoryRequest inventoryRequest);
+
+    /**
      * 库存核对
      *
      * @param request

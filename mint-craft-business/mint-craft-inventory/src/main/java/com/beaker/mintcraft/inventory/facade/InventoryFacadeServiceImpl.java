@@ -134,6 +134,21 @@ public class InventoryFacadeServiceImpl implements InventoryFacadeService {
     }
 
     @Override
+    public SingleResponse<Void> invalid(InventoryRequest inventoryRequest) {
+        GoodsType goodsType = inventoryRequest.getGoodsType();
+
+        switch (goodsType) {
+            case COLLECTION -> collectionInventoryService.invalid(inventoryRequest);
+            default -> throw new UnsupportedOperationException(ERROR_CODE_UNSUPPORTED_GOODS_TYPE);
+        }
+
+        // 清除售罄缓存池中的库存
+        soldOutGoodsLocalCache.invalidate(goodsType + SEPARATOR + inventoryRequest.getGoodsId());
+
+        return SingleResponse.of(null);
+    }
+
+    @Override
     public SingleResponse<Long> removeInventoryDecreaseLog(InventoryRequest inventoryRequest) {
         GoodsType goodsType = inventoryRequest.getGoodsType();
 

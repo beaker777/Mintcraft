@@ -1,7 +1,12 @@
 package com.beaker.mintcraft.api.collection.service;
 
 import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyInventoryRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyPriceRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionRemoveRequest;
 import com.beaker.mintcraft.api.collection.response.CollectionChainResponse;
+import com.beaker.mintcraft.api.collection.response.CollectionModifyResponse;
+import com.beaker.mintcraft.api.collection.response.CollectionRemoveResponse;
 
 /**
  * @Author beaker
@@ -17,4 +22,29 @@ public interface CollectionManageFacadeService {
      * @return
      */
     public CollectionChainResponse create(CollectionCreateRequest request);
+
+
+    /**
+     * 藏品库存修改
+     *
+     * @param request
+     * @return
+     */
+    public CollectionModifyResponse modifyInventory(CollectionModifyInventoryRequest request);
+
+    /**
+     * 藏品价格修改
+     *
+     * @param request
+     * @return
+     */
+    public CollectionModifyResponse modifyPrice(CollectionModifyPriceRequest request);
+
+    /**
+     * 藏品下架
+     *
+     * @param request
+     * @return
+     */
+    public CollectionRemoveResponse remove(CollectionRemoveRequest request);
 }

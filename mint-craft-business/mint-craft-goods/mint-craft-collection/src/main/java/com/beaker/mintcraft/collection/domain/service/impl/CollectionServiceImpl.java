@@ -1,11 +1,17 @@
 package com.beaker.mintcraft.collection.domain.service.impl;
 
 import cn.hutool.core.lang.Assert;
+import com.alicp.jetcache.anno.CacheInvalidate;
 import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.beaker.mintcraft.api.collection.constant.CollectionInventoryModifyType;
 import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyInventoryRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyPriceRequest;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionRemoveRequest;
+import com.beaker.mintcraft.api.collection.response.CollectionInventoryModifyResponse;
 import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
@@ -21,8 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.COLLECTION_SAVE_FAILED;
-import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.COLLECTION_STREAM_SAVE_FAILED;
+import static com.beaker.mintcraft.base.response.ResponseCode.DUPLICATED;
+import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.*;
 
 /**
  * @Author beaker
@@ -40,8 +46,8 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
     @Autowired
     private CollectionMapper collectionMapper;
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Collection create(CollectionCreateRequest request) {
         // 创建藏品
         Collection collection = Collection.create(request);
@@ -58,6 +64,110 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
         Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
 
         return collection;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public CollectionInventoryModifyResponse modifyInventory(CollectionModifyInventoryRequest request) {
+        CollectionInventoryModifyResponse response = new CollectionInventoryModifyResponse();
+        response.setCollectionId(request.getCollectionId());
+
+        // 幂等校验
+        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+                .selectByIdentifier(request.getIdentifier(), request.getEventType().name(), request.getCollectionId());
+        if (existStream != null) {
+            response.setSuccess(true);
+            response.setResponseCode(DUPLICATED.name());
+
+            return response;
+        }
+
+        // 获取藏品最新状态
+        Collection collection = getById(request.getCollectionId());
+        if (collection == null) {
+            throw new CollectionException(COLLECTION_QUERY_FAIL);
+        }
+
+        int quantityDiff = request.getQuantity() - collection.getQuantity();
+        response.setQuantityModified(Math.abs(quantityDiff));
+
+        // 根据不同情况修改库存
+        if (quantityDiff == 0) {
+            response.setModifyType(CollectionInventoryModifyType.UNMODIFIED);
+            response.setSuccess(true);
+
+            return response;
+        } else if (quantityDiff > 0) {
+            response.setModifyType(CollectionInventoryModifyType.INCREASE);
+        } else {
+            response.setModifyType(CollectionInventoryModifyType.DECREASE);
+        }
+        long oldSaleableInventory = collection.getSaleableInventory();
+        collection.setQuantity(request.getQuantity());
+        collection.setSaleableInventory(oldSaleableInventory + quantityDiff);
+
+        // 更新藏品
+        boolean updateResult = updateById(collection);
+        Assert.isTrue(updateResult, () -> new CollectionException(COLLECTION_UPDATE_FAILED));
+
+        // 插入流水
+        CollectionInventoryStream inventoryStream = new CollectionInventoryStream(collection, request.getIdentifier(), request.getEventType(), quantityDiff);
+        boolean saveResult = collectionInventoryStreamMapper.insert(inventoryStream) == 1;
+        Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_INVENTORY_UPDATE_FAILED));
+
+        response.setSuccess(true);
+        return response;
+    }
+
+    @Override
+    @CacheInvalidate(name = ":collection:cache:id:", key = "#args[0].collectionId")
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean modifyPrice(CollectionModifyPriceRequest request) {
+        // 幂等校验
+        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+                .selectByIdentifier(request.getIdentifier(), request.getEventType().name(), request.getCollectionId());
+        if (existStream != null) {
+            return true;
+        }
+
+        // 更新藏品
+        Collection collection = getById(request.getCollectionId());
+        collection.setPrice(request.getPrice());
+        boolean updateResult = updateById(collection);
+        Assert.isTrue(updateResult, () -> new CollectionException(COLLECTION_UPDATE_FAILED));
+
+        // TODO: 后续补充快照
+
+        // 插入流水
+        CollectionStream collectionStream = new CollectionStream(collection, request.getIdentifier(), request.getEventType());
+        boolean saveResult = collectionStreamMapper.insert(collectionStream) == 1;
+        Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
+
+        return true;
+    }
+
+    @Override
+    @CacheInvalidate(name = ":collection:cache:id:", key = "#args[0].collectionId")
+    public Boolean remove(CollectionRemoveRequest request) {
+        // 幂等校验
+        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+                .selectByIdentifier(request.getIdentifier(), request.getEventType().name(), request.getCollectionId());
+        if (existStream != null) {
+            return true;
+        }
+
+        // 更新藏品状态到 REMOVED
+        Collection collection = getById(request.getCollectionId());
+        collection.remove();
+        boolean updateResult = updateById(collection);
+        Assert.isTrue(updateResult, () -> new CollectionException(COLLECTION_UPDATE_FAILED));
+
+        // 插入流水
+        CollectionStream collectionStream = new CollectionStream(collection, request.getIdentifier(), request.getEventType());
+        boolean saveResult = collectionStreamMapper.insert(collectionStream) == 1;
+        Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
+
+        return true;
     }
 
     @Override
