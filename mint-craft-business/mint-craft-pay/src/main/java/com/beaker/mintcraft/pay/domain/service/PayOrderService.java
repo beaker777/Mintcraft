@@ -12,11 +12,13 @@ import com.beaker.mintcraft.pay.domain.entity.PayOrder;
 import com.beaker.mintcraft.pay.domain.event.PaySuccessEvent;
 import com.beaker.mintcraft.pay.domain.event.RefundSuccessEvent;
 import com.beaker.mintcraft.pay.infrastructure.mapper.PayOrderMapper;
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -69,6 +71,16 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         return true;
     }
 
+    public Boolean payExpired(String payOrderId) {
+        PayOrder payOrder = payOrderMapper.selectByPayOrderId(payOrderId);
+        payOrder.payExpired();
+
+        boolean updateResult = saveOrUpdate(payOrder);
+        Assert.isTrue(updateResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+        return true;
+    }
+
     public Boolean refundSuccess(RefundSuccessEvent refundSuccessEvent) {
         PayOrder payOrder = payOrderMapper.selectByPayOrderId(refundSuccessEvent.getPayOrderId());
         payOrder.refundSuccess(refundSuccessEvent);
@@ -105,5 +117,19 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         wrapper.eq("payer_id", payerId);
 
         return this.getOne(wrapper);
+    }
+
+    public List<PayOrder> pageQueryTimeoutOrders(int pageSize, Long minId) {
+        QueryWrapper<PayOrder> wrapper = new QueryWrapper<>();
+
+        wrapper.eq("order_state", PayOrderState.PAYING);
+        wrapper.lt("gmt_create", DateUtils.addMinutes(new Date(), -PayOrder.DEFAULT_TIME_OUT_MINUTES));
+        if (minId != null) {
+            wrapper.ge("id", minId);
+        }
+        wrapper.orderBy(true, true, "gmt_create");
+        wrapper.last("limit " + pageSize);
+
+        return this.list(wrapper);
     }
 }

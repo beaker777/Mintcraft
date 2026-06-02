@@ -170,6 +170,15 @@ public class PayOrder extends BaseEntity {
         return this;
     }
 
+    public PayOrder payExpired() {
+        Assert.equals(this.getOrderState(), PayOrderState.PAYING);
+
+        this.setOrderState(PayOrderState.EXPIRED);
+        this.payExpireTime = new Date();
+
+        return this;
+    }
+
     public PayOrder refundSuccess(RefundSuccessEvent refundSuccessEvent) {
         Assert.equals(this.getOrderState(), PayOrderState.PAID);
 
