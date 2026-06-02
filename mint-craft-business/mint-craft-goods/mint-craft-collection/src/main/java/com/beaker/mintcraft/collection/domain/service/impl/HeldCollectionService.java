@@ -51,6 +51,9 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
     private HeldCollectionStreamService heldCollectionStreamService;
 
     @Autowired
+    private HeldCollectionMapper heldCollectionMapper;
+
+    @Autowired
     private RedissonClient redissonClient;
 
     @Autowired
@@ -190,6 +193,23 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
         }
 
         return retList.getFirst();
+    }
+
+    public Long queryMinIdForMint() {
+        return heldCollectionMapper.queryMinIdForMint();
+    }
+
+    public List<HeldCollection> pageQueryForChainMint(int pageSize, Long minId) {
+        QueryWrapper<HeldCollection> wrapper = new QueryWrapper<>();
+        wrapper.in("state", HeldCollectionState.INIT);
+        wrapper.isNull("nft_id");
+        wrapper.isNull("tx_hash");
+        wrapper.isNull("sync_chain_time");
+        wrapper.ge("id", minId);
+        wrapper.last("limit" + pageSize);
+        wrapper.orderBy(true, true, "gmt_create");
+
+        return this.list(wrapper);
     }
 
     private boolean sendMsg(HeldCollection heldCollection, HeldCollectionEventType eventType) {
