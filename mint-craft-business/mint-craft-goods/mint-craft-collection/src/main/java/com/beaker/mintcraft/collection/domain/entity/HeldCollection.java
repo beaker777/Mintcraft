@@ -136,4 +136,18 @@ public class HeldCollection extends BaseEntity {
 
         return this;
     }
+
+    public HeldCollection destroying() {
+        this.state = HeldCollectionState.DESTROYING;
+        this.deleteTime = new Date();
+
+        return this;
+    }
+
+    public HeldCollection destroyed() {
+        this.state = HeldCollectionState.DESTROYED;
+        this.deleteTime = new Date();
+
+        return this;
+    }
 }

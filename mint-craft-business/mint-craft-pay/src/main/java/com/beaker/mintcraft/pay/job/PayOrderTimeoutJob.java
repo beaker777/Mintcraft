@@ -3,6 +3,7 @@ package com.beaker.mintcraft.pay.job;
 import com.beaker.mintcraft.pay.domain.entity.PayOrder;
 import com.beaker.mintcraft.pay.domain.service.PayOrderService;
 import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ public class PayOrderTimeoutJob {
 
     private static final Logger LOG = LoggerFactory.getLogger(PayOrderTimeoutJob.class);
 
+    @XxlJob("payOrderTimeoutJob")
     public ReturnT<String> execute() {
         List<PayOrder> payOrders = payOrderService.pageQueryTimeoutOrders(PAGE_SIZE, null);
 

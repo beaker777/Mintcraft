@@ -48,6 +48,11 @@ public class ChainFacadeServiceImpl implements ChainFacadeService {
         return getChainService().mint(request);
     }
 
+    @Override
+    public ChainProcessResponse<ChainOperationData> destroy(ChainProcessRequest request) {
+        return getChainService().destroy(request);
+    }
+
     private ChainService getChainService() {
         if (PROFILE_DEV.equals(profile)) {
             return chainServiceFactory.get(ChainType.MOCK);

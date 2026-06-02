@@ -15,8 +15,8 @@ import com.beaker.mintcraft.api.collection.model.HeldCollectionDTO;
 import com.beaker.mintcraft.api.collection.request.HeldCollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionActiveRequest;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionCreateRequest;
+import com.beaker.mintcraft.api.collection.request.held.HeldCollectionDestroyRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
-import com.beaker.mintcraft.cache.constant.CacheConstant;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollectionStream;
 import com.beaker.mintcraft.collection.domain.entity.convertor.HeldCollectionConvertor;
@@ -26,7 +26,6 @@ import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.mq.producer.StreamProducer;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -134,6 +133,30 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
         return true;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public HeldCollection destroy(HeldCollectionDestroyRequest request) {
+        // 销毁藏品前检查是否存在, 发起者和持有者是否相同
+        HeldCollection heldCollection = this.getById(request.getHeldCollectionId());
+        preCheckForDestroy(request, heldCollection);
+
+        // 幂等校验
+        if (heldCollection.getState() == HeldCollectionState.DESTROYING || heldCollection.getState() == HeldCollectionState.DESTROYED) {
+            return heldCollection;
+        }
+
+        // 更新藏品状态
+        heldCollection.destroying();
+        boolean result = this.updateById(heldCollection);
+        Assert.isTrue(result, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
+
+        // 保存流水
+        HeldCollectionStream heldCollectionStream = new HeldCollectionStream().generateForDestroy(heldCollection.getId(), request.getIdentifier(), request.getOperatorId());
+        result = heldCollectionStreamService.save(heldCollectionStream);
+        Assert.isTrue(result, () -> new CollectionException(HELD_COLLECTION_STREAM_SAVE_FAILED));
+
+        return heldCollection;
+    }
+
     public long queryHeldCollectionCount(String userId) {
         QueryWrapper<HeldCollection> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId);
@@ -217,6 +240,16 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
 
         //消息监听：HeldCollectionMsgListener
         return streamProducer.send("heldCollection-out-0", eventType.name(), JSON.toJSONString(heldCollectionDTO));
+    }
+
+    private void preCheckForDestroy(HeldCollectionDestroyRequest request, HeldCollection oldHeldCollection) {
+        if (oldHeldCollection == null) {
+            throw new CollectionException(HELD_COLLECTION_QUERY_FAIL);
+        }
+
+        if (!oldHeldCollection.getUserId().equals(request.getOperatorId())) {
+            throw new CollectionException(HELD_COLLECTION_OWNER_CHECK_ERROR);
+        }
     }
 
 }

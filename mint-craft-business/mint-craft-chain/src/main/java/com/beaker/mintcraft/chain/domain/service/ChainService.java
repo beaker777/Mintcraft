@@ -40,13 +40,20 @@ public interface ChainService {
     ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request);
 
     /**
+     * 销毁藏品
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainOperationData> destroy(ChainProcessRequest request);
+
+    /**
      * 查询上链交易结果
      *
      * @param request
      * @return
      */
     ChainProcessResponse<ChainResultData> queryChainResult(ChainQueryRequest request);
-
 
     /**
      * 发消息

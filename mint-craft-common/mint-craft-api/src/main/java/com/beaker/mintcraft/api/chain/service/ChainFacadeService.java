@@ -37,4 +37,12 @@ public interface ChainFacadeService {
      */
     ChainProcessResponse<ChainOperationData> mint(ChainProcessRequest request);
 
+
+    /**
+     * 销毁藏品
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainOperationData> destroy(ChainProcessRequest request);
 }

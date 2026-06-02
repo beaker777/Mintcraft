@@ -51,4 +51,13 @@ public class HeldCollectionStream extends BaseEntity {
 
         return this;
     }
+
+    public HeldCollectionStream generateForDestroy(Long heldCollectionId, String identifier, String userId) {
+        this.heldCollectionId = heldCollectionId;
+        this.streamType = HeldCollectionEventType.DESTROY.name();
+        this.operator = userId;
+        this.identifier = identifier;
+
+        return this;
+    }
 }
