@@ -292,7 +292,7 @@ public class TradeController {
             Thread.ofVirtual().start(() -> {
                 OrderTimeoutRequest timeoutRequest = new OrderTimeoutRequest();
                 timeoutRequest.setOperatorType(UserType.PLATFORM);
-                timeoutRequest.setOperator(UserType.PLATFORM.name());
+                timeoutRequest.setOperator(UserType.PLATFORM.getDesc());
                 timeoutRequest.setOperateTime(new Date());
                 timeoutRequest.setOrderId(tradeOrderVO.getOrderId());
                 timeoutRequest.setIdentifier(tradeOrderVO.getOrderId());
