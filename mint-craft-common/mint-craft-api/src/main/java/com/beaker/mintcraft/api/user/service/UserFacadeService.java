@@ -1,10 +1,12 @@
 package com.beaker.mintcraft.api.user.service;
 
+import com.beaker.mintcraft.api.user.request.UserPageQueryRequest;
 import com.beaker.mintcraft.api.user.request.UserQueryRequest;
 import com.beaker.mintcraft.api.user.request.UserRegisterRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
+import com.beaker.mintcraft.base.response.PageResponse;
 
 /**
  * @Author beaker
@@ -27,4 +29,11 @@ public interface UserFacadeService {
      * @return
      */
     UserQueryResponse<UserInfo> query(UserQueryRequest userQueryRequest);
+
+    /**
+     * 分页查询用户信息
+     * @param userPageQueryRequest
+     * @return
+     */
+    PageResponse<UserInfo> pageQuery(UserPageQueryRequest userPageQueryRequest);
 }

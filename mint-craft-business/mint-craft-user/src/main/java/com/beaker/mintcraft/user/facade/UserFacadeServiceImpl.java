@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.user.facade;
 
+import com.beaker.mintcraft.api.user.request.UserPageQueryRequest;
 import com.beaker.mintcraft.api.user.request.UserQueryRequest;
 import com.beaker.mintcraft.api.user.request.UserRegisterRequest;
 import com.beaker.mintcraft.api.user.request.condition.impl.UserIdQueryCondition;
@@ -9,6 +10,7 @@ import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
 import com.beaker.mintcraft.api.user.service.UserFacadeService;
+import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.rpc.facade.Facade;
 import com.beaker.mintcraft.user.domain.entity.User;
 import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
@@ -54,6 +56,25 @@ public class UserFacadeServiceImpl implements UserFacadeService {
         UserInfo userInfo = UserConvertor.INSTANCE.mapToVO(user);
         response.setSuccess(true);
         response.setData(userInfo);
+
+        return response;
+    }
+
+    @Override
+    public PageResponse<UserInfo> pageQuery(UserPageQueryRequest userPageQueryRequest) {
+        PageResponse<UserInfo> response = new PageResponse<>();
+
+        // 分页查询
+        PageResponse<User> pageResponse = userService.pageQueryByState(userPageQueryRequest.getKeyWord(), userPageQueryRequest.getState(),
+                userPageQueryRequest.getCurrentPage(), userPageQueryRequest.getPageSize());
+        if (!pageResponse.getSuccess()) {
+            response.setSuccess(false);
+            return response;
+        }
+        response.setSuccess(true);
+        response.setDatas(UserConvertor.INSTANCE.mapToVo(pageResponse.getDatas()));
+        response.setCurrentPage(pageResponse.getCurrentPage());
+        response.setPageSize(pageResponse.getPageSize());
 
         return response;
     }

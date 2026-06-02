@@ -3,10 +3,15 @@ package com.beaker.mintcraft.user.domain.service;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import com.alicp.jetcache.Cache;
+import com.alicp.jetcache.CacheManager;
 import com.alicp.jetcache.anno.CacheInvalidate;
 import com.alicp.jetcache.anno.CacheRefresh;
 import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
+import com.alicp.jetcache.template.QuickConfig;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.user.constant.UserOperateTypeEnum;
 import com.beaker.mintcraft.api.user.constant.UserState;
@@ -16,12 +21,14 @@ import com.beaker.mintcraft.api.user.request.UserModifyRequest;
 import com.beaker.mintcraft.api.user.response.UserOperatorResponse;
 import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
+import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.lock.DistributeLock;
 import com.beaker.mintcraft.user.domain.entity.User;
 import com.beaker.mintcraft.user.domain.entity.convertor.UserConvertor;
 import com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode;
 import com.beaker.mintcraft.user.infrastructure.exception.UserException;
 import com.beaker.mintcraft.user.infrastructure.mapper.UserMapper;
+import jakarta.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
@@ -31,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static com.beaker.mintcraft.user.infrastructure.exception.UserErrorCode.*;
@@ -55,7 +63,13 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
     private AuthService authService;
 
     @Autowired
+    private UserCacheDelayDeleteService userCacheDelayDeleteService;
+
+    @Autowired
     private RedissonClient redissonClient;
+
+    @Autowired
+    private CacheManager cacheManager;
 
     /**
      * 用户名布隆过滤器
@@ -66,6 +80,22 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
      * 邀请码布隆过滤器
      */
     private RBloomFilter<String> inviteCodeBloomFilter;
+
+    /**
+     * 通过 userId 缓存用户信息
+     */
+    private Cache<String, User> idUserCache;
+
+    @PostConstruct
+    public void init() {
+        QuickConfig idQc = QuickConfig.newBuilder(":user:cache:id:")
+                .cacheType(CacheType.BOTH)
+                .expire(Duration.ofHours(2))
+                .syncLocal(true)
+                .build();
+
+        idUserCache = cacheManager.getOrCreateCache(idQc);
+    }
 
     /**
      * 通过用户 id 查询详细信息
@@ -100,6 +130,21 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         return userMapper.findByTelephoneAndPasswordHash(telephone, DigestUtil.md5Hex(password));
     }
 
+    public PageResponse<User> pageQueryByState(String keyWord, String state, int currentPage, int pageSize) {
+        Page<User> page = new Page<>(currentPage, pageSize);
+
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("state", state);
+        if (keyWord != null) {
+            wrapper.like("telephone", keyWord);
+        }
+        wrapper.orderBy(true, true, "gmt_create");
+
+        Page<User> userPage = this.page(page, wrapper);
+
+        return PageResponse.of(userPage.getRecords(), (int) userPage.getTotal(), pageSize, currentPage);
+    }
+
     @DistributeLock(scene = "USER_REGISTER", keyExpression = "#telephone")
     @Transactional(rollbackFor = Exception.class)
     public UserOperatorResponse register(String telephone, String inviteCode) {
@@ -132,7 +177,9 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         addNickName(defaultNickName);
         addInviteCode(randomString);
         // TODO 在这里需要更新邀请者的排名
-        // TODO 在这里需要更新用户的 redis 缓存
+
+        // 更新用户缓存
+        updateUserCache(user.getId().toString(), user);
 
         // 加入流水
         long streamResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.REGISTER);
@@ -278,6 +325,71 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         return userOperatorResponse;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public UserOperatorResponse freeze(Long userId) {
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        // 确认待冻结用户状态
+        User user = userMapper.findById(userId);
+        Assert.notNull(user, () -> new UserException(USER_NOT_EXIST));
+        Assert.isTrue(user.getState() == UserState.ACTIVE, () -> new UserException(USER_STATUS_IS_NOT_ACTIVE));
+
+        // 第一次删除缓存
+        idUserCache.remove(user.getId().toString());
+
+        // 幂等校验
+        if (user.getState() == UserState.FROZEN) {
+            userOperatorResponse.setSuccess(true);
+            return userOperatorResponse;
+        }
+
+        // 更新用户状态
+        user.setState(UserState.FROZEN);
+        boolean updateResult = updateById(user);
+        Assert.isTrue(updateResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+        Long saveResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.FREEZE);
+        Assert.notNull(saveResult, () -> new BizException(RepoErrorCode.INSERT_FAILED));
+
+        // 第二次删除缓存
+        userCacheDelayDeleteService.delayedCacheDelete(idUserCache, user);
+
+        userOperatorResponse.setSuccess(true);
+        return userOperatorResponse;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public UserOperatorResponse unfreeze(Long userId) {
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        // 确认待冻结用户状态
+        User user = userMapper.findById(userId);
+        Assert.notNull(user, () -> new UserException(USER_NOT_EXIST));
+
+        // 第一次删除缓存
+        idUserCache.remove(user.getId().toString());
+
+        // 幂等校验
+        if (user.getState() == UserState.ACTIVE) {
+            userOperatorResponse.setSuccess(true);
+            return userOperatorResponse;
+        }
+
+        // 更新用户状态
+        user.setState(UserState.ACTIVE);
+        boolean updateResult = updateById(user);
+        Assert.isTrue(updateResult, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+        Long saveResult = userOperateStreamService.insertStream(user, UserOperateTypeEnum.UNFREEZE);
+        Assert.notNull(saveResult, () -> new BizException(RepoErrorCode.INSERT_FAILED));
+
+        // 第二次删除缓存
+        userCacheDelayDeleteService.delayedCacheDelete(idUserCache, user);
+
+        userOperatorResponse.setSuccess(true);
+        return userOperatorResponse;
+    }
+
     public boolean nickNameExist(String nickName) {
         // 如果布隆过滤器认为已经存在, 进行二次校验
         if (nickNameBloomFilter != null && nickNameBloomFilter.contains(nickName)) {
@@ -322,5 +434,9 @@ public class UserService extends ServiceImpl<UserMapper, User> implements Initia
         if (inviteCodeBloomFilter != null && !inviteCodeBloomFilter.isExists()) {
             inviteCodeBloomFilter.tryInit(100000L, 0.01);
         }
+    }
+
+    private void updateUserCache(String userId, User user) {
+        idUserCache.put(userId, user);
     }
 }
