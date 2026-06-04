@@ -16,6 +16,7 @@ import com.beaker.mintcraft.api.collection.request.HeldCollectionPageQueryReques
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionActiveRequest;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionCreateRequest;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionDestroyRequest;
+import com.beaker.mintcraft.api.collection.request.held.HeldCollectionTransferRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollectionStream;
@@ -131,6 +132,33 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
         }
 
         return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public HeldCollection transfer(HeldCollectionTransferRequest request) {
+        HeldCollection oldHeldCollection = this.getById(request.getHeldCollectionId());
+        preCheckForTransfer(request, oldHeldCollection);
+
+        // 原持有藏品失效
+        oldHeldCollection.inActived();
+        boolean updateResult = this.updateById(oldHeldCollection);
+        Assert.isTrue(updateResult, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
+
+        // 插入流水
+        HeldCollectionStream transferOutStream = new HeldCollectionStream().generateForTransferOut(oldHeldCollection.getId(), request.getIdentifier(), request.getOperatorId());
+        boolean saveResult = heldCollectionStreamService.save(transferOutStream);
+        Assert.isTrue(saveResult, () -> new CollectionException(HELD_COLLECTION_STREAM_SAVE_FAILED));
+
+        // 新持有藏品生成
+        HeldCollection newHeldCollection = new HeldCollection().transfer(oldHeldCollection, request.getRecipientUserId());
+        saveResult = this.save(newHeldCollection);
+        Assert.isTrue(saveResult, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
+
+        HeldCollectionStream transferInStream = new HeldCollectionStream().generateForTransferIn(newHeldCollection.getId(), request.getIdentifier(), request.getRecipientUserId());
+        saveResult = heldCollectionStreamService.save(transferInStream);
+        Assert.isTrue(saveResult, () -> new CollectionException(HELD_COLLECTION_STREAM_SAVE_FAILED));
+
+        return newHeldCollection;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -252,4 +280,17 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
         }
     }
 
+    private void preCheckForTransfer(HeldCollectionTransferRequest request, HeldCollection oldHeldCollection) {
+        if (oldHeldCollection == null) {
+            throw new CollectionException(HELD_COLLECTION_QUERY_FAIL);
+        }
+
+        if (oldHeldCollection.getState() != HeldCollectionState.ACTIVED) {
+            throw new CollectionException(HELD_COLLECTION_STATE_CHECK_ERROR);
+        }
+
+        if (!oldHeldCollection.getUserId().equals(request.getOperatorId())) {
+            throw new CollectionException(HELD_COLLECTION_OWNER_CHECK_ERROR);
+        }
+    }
 }

@@ -60,4 +60,22 @@ public class HeldCollectionStream extends BaseEntity {
 
         return this;
     }
+
+    public HeldCollectionStream generateForTransferOut(Long heldCollectionId, String identifier, String userId) {
+        this.heldCollectionId = heldCollectionId;
+        this.streamType = HeldCollectionEventType.TRANSFER.name() + "_OUT";
+        this.operator = userId;
+        this.identifier = identifier;
+
+        return this;
+    }
+
+    public HeldCollectionStream generateForTransferIn(Long heldCollectionId, String identifier, String userId) {
+        this.heldCollectionId = heldCollectionId;
+        this.streamType = HeldCollectionEventType.TRANSFER.name() + "_IN";
+        this.operator = userId;
+        this.identifier = identifier;
+
+        return this;
+    }
 }

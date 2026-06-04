@@ -48,6 +48,14 @@ public interface ChainService {
     ChainProcessResponse<ChainOperationData> destroy(ChainProcessRequest request);
 
     /**
+     * 交易藏品
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainOperationData> transfer(ChainProcessRequest request);
+
+    /**
      * 查询上链交易结果
      *
      * @param request

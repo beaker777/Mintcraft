@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.collection.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.lang.Assert;
 import com.beaker.mintcraft.api.chain.constant.ChainOperateBizType;
 import com.beaker.mintcraft.api.chain.constant.ChainOperateType;
 import com.beaker.mintcraft.api.chain.request.ChainProcessRequest;
@@ -10,15 +11,22 @@ import com.beaker.mintcraft.api.chain.service.ChainFacadeService;
 import com.beaker.mintcraft.api.collection.request.CollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.request.HeldCollectionPageQueryRequest;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionDestroyRequest;
+import com.beaker.mintcraft.api.collection.request.held.HeldCollectionTransferRequest;
 import com.beaker.mintcraft.api.collection.service.CollectionFacadeService;
 import com.beaker.mintcraft.api.collection.valobj.CollectionVO;
 import com.beaker.mintcraft.api.collection.valobj.HeldCollectionVO;
+import com.beaker.mintcraft.api.user.request.UserQueryRequest;
+import com.beaker.mintcraft.api.user.response.UserQueryResponse;
 import com.beaker.mintcraft.api.user.response.data.UserInfo;
+import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import com.beaker.mintcraft.base.response.PageResponse;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.service.impl.HeldCollectionService;
+import com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode;
+import com.beaker.mintcraft.collection.infrastructure.exception.CollectionException;
 import com.beaker.mintcraft.collection.param.DestroyParam;
+import com.beaker.mintcraft.collection.param.TransferParam;
 import com.beaker.mintcraft.web.util.MultiResultConvertor;
 import com.beaker.mintcraft.web.vo.MultiResult;
 import com.beaker.mintcraft.web.vo.Result;
@@ -26,11 +34,16 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.beaker.mintcraft.api.common.constant.CommonConstant.SEPARATOR;
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.TRANSFER_SELF_ERROR;
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.USER_NOT_EXIST;
+import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.HELD_COLLECTION_OWNER_CHECK_ERROR;
+import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.HELD_COLLECTION_SAVE_FAILED;
 
 /**
  * @Author beaker
@@ -44,6 +57,9 @@ public class CollectionController {
 
     @DubboReference
     private ChainFacadeService chainFacadeService;
+
+    @DubboReference
+    private UserFacadeService userFacadeService;
 
     @Resource
     private CollectionFacadeService collectionFacadeService;
@@ -148,6 +164,60 @@ public class CollectionController {
 
             ChainProcessResponse<ChainOperationData> response = chainFacadeService.destroy(chainProcessRequest);
             return Result.success(response.getSuccess());
+        }
+
+        return Result.success(false);
+    }
+
+    @PostMapping("/transfer")
+    public Result<Boolean> transfer(@Valid @RequestBody TransferParam param) {
+        String userId = (String) StpUtil.getLoginId();
+
+        // 不能转移给自己
+        if (userId.equals(param.getRecipientUserId())) {
+            throw new CollectionException(TRANSFER_SELF_ERROR);
+        }
+
+        // 获取待转移藏品和接收用户
+        SingleResponse<HeldCollectionVO> response = collectionFacadeService.queryHeldCollectionById(Long.parseLong(param.getHeldCollectionId()));
+        HeldCollectionVO heldCollectionVO = response.getData();
+        UserQueryRequest userQueryRequest = new UserQueryRequest(Long.valueOf(param.getRecipientUserId()));
+        UserQueryResponse<UserInfo> userQueryResponse = userFacadeService.query(userQueryRequest);
+        UserInfo recipient = userQueryResponse.getData();
+
+        if (!userQueryResponse.getSuccess() || userQueryResponse.getData() == null) {
+            throw new CollectionException(USER_NOT_EXIST);
+        }
+
+        if (heldCollectionVO != null) {
+            // 藏品持有者与登录用户应当相同
+            Assert.isTrue(StringUtils.equals(heldCollectionVO.getUserId(), userId), () -> new CollectionException(HELD_COLLECTION_OWNER_CHECK_ERROR));
+
+            // 先变更数据库数据
+            HeldCollectionTransferRequest transferRequest = new HeldCollectionTransferRequest();
+            transferRequest.setRecipientUserId(param.getRecipientUserId());
+            transferRequest.setHeldCollectionId(param.getHeldCollectionId());
+            transferRequest.setOperatorId(userId);
+            transferRequest.setIdentifier(param.getHeldCollectionId() + "_TRANSFER");
+
+            HeldCollection transferHeldCollection = heldCollectionService.transfer(transferRequest);
+            Assert.notNull(transferHeldCollection, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
+
+            // 变更链上数据
+            ChainProcessRequest request = new ChainProcessRequest();
+            request.setBizId(String.valueOf(transferHeldCollection.getId()));
+            request.setBizType(ChainOperateBizType.HELD_COLLECTION.name());
+            request.setIdentifier(param.getHeldCollectionId() + SEPARATOR + param.getRecipientUserId() + SEPARATOR + ChainOperateType.COLLECTION_TRANSFER.name());
+            request.setClassId(String.valueOf(heldCollectionVO.getCollectionId()));
+            request.setNtfId(transferHeldCollection.getNftId());
+            request.setRecipient(recipient.getBlockChainUrl());
+
+            UserInfo owner = (UserInfo) StpUtil.getSession().get(userId);
+            request.setOwner(owner.getBlockChainUrl());
+
+            ChainProcessResponse<ChainOperationData> processResponse = chainFacadeService.transfer(request);
+
+            return Result.success(processResponse.getSuccess());
         }
 
         return Result.success(false);

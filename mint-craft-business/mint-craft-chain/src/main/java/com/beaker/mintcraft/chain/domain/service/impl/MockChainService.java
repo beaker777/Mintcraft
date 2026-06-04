@@ -67,6 +67,13 @@ public class MockChainService extends AbstractChainService {
     }
 
     @Override
+    public ChainProcessResponse<ChainOperationData> transfer(ChainProcessRequest request) {
+        return doPostExecute(request, ChainOperateType.COLLECTION_TRANSFER, chainRequest -> {
+
+        });
+    }
+
+    @Override
     public ChainProcessResponse<ChainResultData> queryChainResult(ChainQueryRequest request) {
         ChainProcessResponse<ChainResultData> response = new ChainProcessResponse<>();
         response.setSuccess(true);

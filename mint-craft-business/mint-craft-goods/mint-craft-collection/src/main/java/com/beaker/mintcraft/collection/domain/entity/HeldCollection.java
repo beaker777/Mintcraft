@@ -137,6 +137,12 @@ public class HeldCollection extends BaseEntity {
         return this;
     }
 
+    public HeldCollection inActived() {
+        this.state = HeldCollectionState.INACTIVED;
+
+        return this;
+    }
+
     public HeldCollection destroying() {
         this.state = HeldCollectionState.DESTROYING;
         this.deleteTime = new Date();
@@ -147,6 +153,37 @@ public class HeldCollection extends BaseEntity {
     public HeldCollection destroyed() {
         this.state = HeldCollectionState.DESTROYED;
         this.deleteTime = new Date();
+
+        return this;
+    }
+
+    public HeldCollection transfer(Long collectionId, String serialNo, String preId, String userId, String nftId) {
+        this.collectionId = collectionId;
+        this.serialNo = serialNo;
+        this.preId = preId;
+        this.userId = userId;
+        this.nftId = nftId;
+        this.state = HeldCollectionState.INIT;
+        this.holdTime = new Date();
+
+        return this;
+    }
+
+    public HeldCollection transfer(HeldCollection heldCollection, String recipientUserId) {
+        this.collectionId = heldCollection.getCollectionId();
+        this.serialNo = heldCollection.getSerialNo();
+        this.preId = heldCollection.getUserId();
+        this.userId = recipientUserId;
+        this.nftId = heldCollection.getNftId();
+        this.state = HeldCollectionState.INIT;
+        this.holdTime = new Date();
+        this.name = heldCollection.getName();
+        this.cover = heldCollection.getCover();
+        this.bizType = GoodsSaleBizType.TRANSFER;
+        this.bizNo = heldCollection.getId().toString();
+        this.purchasePrice = heldCollection.getPurchasePrice();
+        this.referencePrice = heldCollection.getReferencePrice();
+        this.rarity = heldCollection.getRarity();
 
         return this;
     }

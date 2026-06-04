@@ -45,4 +45,12 @@ public interface ChainFacadeService {
      * @return
      */
     ChainProcessResponse<ChainOperationData> destroy(ChainProcessRequest request);
+
+    /**
+     * 交易藏品
+     *
+     * @param request
+     * @return
+     */
+    ChainProcessResponse<ChainOperationData> transfer(ChainProcessRequest request);
 }
