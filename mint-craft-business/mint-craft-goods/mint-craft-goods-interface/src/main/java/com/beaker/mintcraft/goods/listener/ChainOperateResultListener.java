@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import com.beaker.mintcraft.api.chain.model.ChainOperateBody;
 import com.beaker.mintcraft.api.chain.response.data.ChainResultData;
 import com.beaker.mintcraft.api.collection.constant.CollectionState;
+import com.beaker.mintcraft.api.collection.constant.HeldCollectionState;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionActiveRequest;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
@@ -12,6 +13,7 @@ import com.beaker.mintcraft.base.exception.biz.BizException;
 import com.beaker.mintcraft.base.exception.biz.RepoErrorCode;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
+import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import com.beaker.mintcraft.collection.domain.service.impl.HeldCollectionService;
 import com.beaker.mintcraft.collection.infrastructure.exception.CollectionException;
@@ -27,7 +29,7 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.function.Consumer;
 
-import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.COLLECTION_QUERY_FAIL;
+import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.*;
 
 
 /**
@@ -85,6 +87,40 @@ public class ChainOperateResultListener extends AbstractStreamConsumer {
                     collection.setSyncChainTime(new Date());
                     result = collectionService.updateById(collection);
                     Assert.isTrue(result, () -> new BizException(RepoErrorCode.UPDATE_FAILED));
+
+                    break;
+                case COLLECTION_DESTROY:
+                    HeldCollection heldCollection = heldCollectionService.queryById(Long.valueOf(chainOperateBody.getBizId()));
+                    if (heldCollection == null) {
+                        throw new CollectionException(HELD_COLLECTION_QUERY_FAIL);
+                    }
+
+                    // 幂等校验
+                    if (heldCollection.getState().equals(HeldCollectionState.DESTROYED)) {
+                        return;
+                    }
+
+                    // 状态校验
+                    if (!heldCollection.getState().equals(HeldCollectionState.DESTROYING)) {
+                        throw new CollectionException(HELD_COLLECTION_STATE_CHECK_ERROR);
+                    }
+
+                    // 更新藏品状态
+                    heldCollection.destroyed();
+                    boolean updateResult = heldCollectionService.updateById(heldCollection);
+                    Assert.isTrue(updateResult, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
+
+                    break;
+                case COLLECTION_TRANSFER:
+                    // 交易成功后将新藏品的状态推进到 active
+                    HeldCollection transferHeldCollection = heldCollectionService.queryById(Long.valueOf(chainOperateBody.getBizId()));
+                    if (transferHeldCollection == null || !transferHeldCollection.getState().equals(HeldCollectionState.INIT)) {
+                        throw new CollectionException(HELD_COLLECTION_QUERY_FAIL);
+                    }
+
+                    transferHeldCollection.actived(chainResultData.getNftId(), chainResultData.getTxHash());
+                    updateResult = heldCollectionService.updateById(transferHeldCollection);
+                    Assert.isTrue(updateResult, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
 
                     break;
                 default:

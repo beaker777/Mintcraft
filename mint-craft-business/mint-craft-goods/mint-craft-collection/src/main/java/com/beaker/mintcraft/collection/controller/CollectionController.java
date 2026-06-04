@@ -193,7 +193,7 @@ public class CollectionController {
             // 藏品持有者与登录用户应当相同
             Assert.isTrue(StringUtils.equals(heldCollectionVO.getUserId(), userId), () -> new CollectionException(HELD_COLLECTION_OWNER_CHECK_ERROR));
 
-            // 先变更数据库数据
+            // 先变更数据库数据, 返回新藏品
             HeldCollectionTransferRequest transferRequest = new HeldCollectionTransferRequest();
             transferRequest.setRecipientUserId(param.getRecipientUserId());
             transferRequest.setHeldCollectionId(param.getHeldCollectionId());
