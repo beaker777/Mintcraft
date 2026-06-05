@@ -18,6 +18,7 @@ import com.beaker.mintcraft.api.collection.request.held.HeldCollectionCreateRequ
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionDestroyRequest;
 import com.beaker.mintcraft.api.collection.request.held.HeldCollectionTransferRequest;
 import com.beaker.mintcraft.base.response.PageResponse;
+import com.beaker.mintcraft.cache.constant.CacheConstant;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollection;
 import com.beaker.mintcraft.collection.domain.entity.HeldCollectionStream;
 import com.beaker.mintcraft.collection.domain.entity.convertor.HeldCollectionConvertor;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -102,6 +104,36 @@ public class HeldCollectionService extends ServiceImpl<HeldCollectionMapper, Hel
 
             return heldCollection;
         }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public List<HeldCollection> batchCreate(List<HeldCollectionCreateRequest> heldCollectionCreateRequests) {
+        List<HeldCollection> heldCollections = new ArrayList<>();
+        List<HeldCollectionStream> heldCollectionStreams = new ArrayList<>();
+
+        // 创建持有藏品
+        for (HeldCollectionCreateRequest request : heldCollectionCreateRequests) {
+            HeldCollection heldCollection = new HeldCollection();
+            Long serialNo = redissonClient.getAtomicLong(HELD_COLLECTION_BIND_BOX_PREFIX + request.getGoodsType() + CACHE_KEY_SEPARATOR + request.getSerialNoBaseId()).incrementAndGet();
+
+            // 初始化持有藏品
+            heldCollection.init(request, serialNo.toString());
+            heldCollections.add(heldCollection);
+        }
+
+        // this 调用会导致 saveBatch 的事务失效, 需要在方法外增加事务
+        boolean saveResult = this.saveBatch(heldCollections);
+        Assert.isTrue(saveResult, () -> new CollectionException(HELD_COLLECTION_SAVE_FAILED));
+
+        // 插入流水
+        for (HeldCollection heldCollection : heldCollections) {
+            HeldCollectionStream heldCollectionStream = new HeldCollectionStream().generateForCreate(heldCollection.getId(), heldCollection.getId().toString());
+            heldCollectionStreams.add(heldCollectionStream);
+        }
+        saveResult = heldCollectionStreamService.saveBatch(heldCollectionStreams);
+        Assert.isTrue(saveResult, () -> new CollectionException(HELD_COLLECTION_STREAM_SAVE_FAILED));
+
+        return heldCollections;
     }
 
     public Boolean active(HeldCollectionActiveRequest request) {

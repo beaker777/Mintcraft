@@ -11,4 +11,14 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CollectionStreamMapper extends BaseMapper<CollectionStream> {
+
+    /**
+     * 根据标识符查询
+     *
+     * @param identifier
+     * @param streamType
+     * @param collectionId
+     * @return
+     */
+    CollectionStream selectByIdentifier(String identifier, String streamType, Long collectionId);
 }

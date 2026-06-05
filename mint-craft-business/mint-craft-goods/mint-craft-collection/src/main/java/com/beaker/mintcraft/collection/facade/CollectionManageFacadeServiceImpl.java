@@ -7,22 +7,23 @@ import com.beaker.mintcraft.api.chain.response.ChainProcessResponse;
 import com.beaker.mintcraft.api.chain.response.data.ChainOperationData;
 import com.beaker.mintcraft.api.chain.service.ChainFacadeService;
 import com.beaker.mintcraft.api.collection.constant.CollectionInventoryModifyType;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyInventoryRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyPriceRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionRemoveRequest;
-import com.beaker.mintcraft.api.collection.response.CollectionChainResponse;
-import com.beaker.mintcraft.api.collection.response.CollectionInventoryModifyResponse;
-import com.beaker.mintcraft.api.collection.response.CollectionModifyResponse;
-import com.beaker.mintcraft.api.collection.response.CollectionRemoveResponse;
+import com.beaker.mintcraft.api.collection.constant.CollectionState;
+import com.beaker.mintcraft.api.collection.request.admin.*;
+import com.beaker.mintcraft.api.collection.response.*;
 import com.beaker.mintcraft.api.collection.service.CollectionManageFacadeService;
+import com.beaker.mintcraft.api.collection.valobj.HeldCollectionVO;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.inventory.request.InventoryRequest;
 import com.beaker.mintcraft.api.inventory.service.InventoryFacadeService;
+import com.beaker.mintcraft.api.user.request.UserQueryRequest;
+import com.beaker.mintcraft.api.user.response.UserQueryResponse;
+import com.beaker.mintcraft.api.user.response.data.UserInfo;
+import com.beaker.mintcraft.api.user.service.UserFacadeService;
 import com.beaker.mintcraft.base.response.SingleResponse;
 import com.beaker.mintcraft.collection.domain.entity.Collection;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import com.beaker.mintcraft.collection.infrastructure.exception.CollectionException;
+import com.beaker.mintcraft.rpc.support.RemoteCallWrapper;
 import jakarta.annotation.Resource;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -30,6 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.UUID;
+
+import static com.beaker.mintcraft.api.order.exception.OrderErrorCode.*;
+import static com.beaker.mintcraft.base.response.ResponseCode.DUPLICATED;
 import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.COLLECTION_INVENTORY_UPDATE_FAILED;
 
 /**
@@ -45,6 +50,9 @@ public class CollectionManageFacadeServiceImpl implements CollectionManageFacade
 
     @DubboReference
     private InventoryFacadeService inventoryFacadeService;
+
+    @DubboReference
+    private UserFacadeService userFacadeService;
 
     @Resource
     private CollectionService collectionService;
@@ -149,5 +157,68 @@ public class CollectionManageFacadeServiceImpl implements CollectionManageFacade
         response.setSuccess(result);
         response.setCollectionId(request.getCollectionId());
         return response;
+    }
+
+    @Override
+    public CollectionAirdropResponse airDrop(CollectionAirDropRequest request) {
+        // 检查用户是否可被空投, 这里设置的比较简单, 如果后续节点较多可以改成责任链
+        UserQueryRequest userQueryRequest = new UserQueryRequest(request.getRecipientUserId());
+        UserQueryResponse<UserInfo> userQueryResponse = userFacadeService.query(userQueryRequest);
+        checkUser(userQueryResponse);
+
+        // 检查藏品是否可被空投, 这里设置的比较简单, 如果后续节点较多可以改成责任链
+        Collection collection = collectionService.queryById(request.getCollectionId());
+        checkCollection(collection, request.getQuantity());
+
+        CollectionAirdropResponse response = collectionService.airDrop(request, collection);
+
+        // 执行失败或幂等成功无需上链, 直接返回
+        if (!response.getSuccess() || response.getResponseCode().equals(DUPLICATED.name())) {
+            return response;
+        }
+
+        for (HeldCollectionVO heldCollection : response.getHeldCollections()) {
+            ChainProcessRequest chainProcessRequest = new ChainProcessRequest();
+            chainProcessRequest.setRecipient(userQueryResponse.getData().getBlockChainUrl());
+            chainProcessRequest.setClassId(String.valueOf(heldCollection.getCollectionId()));
+            chainProcessRequest.setClassName(heldCollection.getName());
+            chainProcessRequest.setSerialNo(heldCollection.getSerialNo());
+            chainProcessRequest.setBizId(heldCollection.getId());
+            chainProcessRequest.setBizType(ChainOperateBizType.HELD_COLLECTION.name());
+            chainProcessRequest.setIdentifier(UUID.randomUUID().toString());
+
+            // 如果失败了, 依靠定时任务补偿
+            ChainProcessResponse<ChainOperationData> chainProcessResponse = RemoteCallWrapper
+                    .call(req -> chainFacadeService.mint(chainProcessRequest), chainProcessRequest, "mint");
+
+            response.setSuccess(chainProcessResponse.getSuccess());
+        }
+
+        return response;
+    }
+
+    private void checkUser(UserQueryResponse<UserInfo> userQueryResponse) {
+        if (!userQueryResponse.getSuccess() || userQueryResponse.getData() == null) {
+            throw new CollectionException(USER_NOT_EXIST);
+        }
+
+        UserInfo userInfo = userQueryResponse.getData();
+        if (!userInfo.userCanBuy()) {
+            throw new CollectionException(BUYER_STATUS_ABNORMAL);
+        }
+    }
+
+    private void checkCollection(Collection collection, Integer quantity) {
+        if (collection == null) {
+            throw new CollectionException(COLLECTION_NO_EXIST);
+        }
+
+        if (collection.getState() != CollectionState.SUCCEED) {
+            throw new CollectionException(GOODS_NOT_AVAILABLE);
+        }
+
+        if (collection.getSaleableInventory() < quantity) {
+            throw new CollectionException(INVENTORY_NOT_ENOUGH);
+        }
     }
 }

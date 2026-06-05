@@ -1,9 +1,7 @@
 package com.beaker.mintcraft.api.collection.service;
 
-import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyInventoryRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyPriceRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionRemoveRequest;
+import com.beaker.mintcraft.api.collection.request.admin.*;
+import com.beaker.mintcraft.api.collection.response.CollectionAirdropResponse;
 import com.beaker.mintcraft.api.collection.response.CollectionChainResponse;
 import com.beaker.mintcraft.api.collection.response.CollectionModifyResponse;
 import com.beaker.mintcraft.api.collection.response.CollectionRemoveResponse;
@@ -47,4 +45,12 @@ public interface CollectionManageFacadeService {
      * @return
      */
     public CollectionRemoveResponse remove(CollectionRemoveRequest request);
+
+    /**
+     * 空投
+     *
+     * @param request
+     * @return
+     */
+    public CollectionAirdropResponse airDrop(CollectionAirDropRequest request);
 }

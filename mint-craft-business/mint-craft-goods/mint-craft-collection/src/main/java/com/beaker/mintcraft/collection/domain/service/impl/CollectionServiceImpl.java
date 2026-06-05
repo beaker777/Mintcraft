@@ -7,27 +7,30 @@ import com.alicp.jetcache.anno.CacheType;
 import com.alicp.jetcache.anno.Cached;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.beaker.mintcraft.api.collection.constant.CollectionInventoryModifyType;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionCreateRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyInventoryRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionModifyPriceRequest;
-import com.beaker.mintcraft.api.collection.request.admin.CollectionRemoveRequest;
+import com.beaker.mintcraft.api.collection.request.admin.*;
+import com.beaker.mintcraft.api.collection.request.held.HeldCollectionCreateRequest;
+import com.beaker.mintcraft.api.collection.response.CollectionAirdropResponse;
 import com.beaker.mintcraft.api.collection.response.CollectionInventoryModifyResponse;
+import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.goods.request.GoodsCancelSaleRequest;
 import com.beaker.mintcraft.api.goods.request.GoodsTrySaleRequest;
-import com.beaker.mintcraft.collection.domain.entity.Collection;
-import com.beaker.mintcraft.collection.domain.entity.CollectionInventoryStream;
-import com.beaker.mintcraft.collection.domain.entity.CollectionStream;
+import com.beaker.mintcraft.collection.domain.entity.*;
+import com.beaker.mintcraft.collection.domain.entity.convertor.HeldCollectionConvertor;
 import com.beaker.mintcraft.collection.domain.service.CollectionService;
 import com.beaker.mintcraft.collection.infrastructure.exception.CollectionException;
+import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionAirdropStreamMapper;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionInventoryStreamMapper;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionMapper;
 import com.beaker.mintcraft.collection.infrastructure.mapper.CollectionStreamMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.beaker.mintcraft.base.response.ResponseCode.DUPLICATED;
+import static com.beaker.mintcraft.base.response.ResponseCode.SUCCESS;
 import static com.beaker.mintcraft.collection.infrastructure.exception.CollectionErrorCode.*;
 
 /**
@@ -38,7 +41,13 @@ import static com.beaker.mintcraft.collection.infrastructure.exception.Collectio
 public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper, Collection> implements CollectionService {
 
     @Autowired
+    private HeldCollectionService heldCollectionService;
+
+    @Autowired
     private CollectionInventoryStreamMapper collectionInventoryStreamMapper;
+
+    @Autowired
+    private CollectionAirdropStreamMapper collectionAirdropStreamMapper;
 
     @Autowired
     private CollectionStreamMapper collectionStreamMapper;
@@ -73,7 +82,7 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
         response.setCollectionId(request.getCollectionId());
 
         // 幂等校验
-        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+        CollectionStream existStream = collectionStreamMapper
                 .selectByIdentifier(request.getIdentifier(), request.getEventType().name(), request.getCollectionId());
         if (existStream != null) {
             response.setSuccess(true);
@@ -124,7 +133,7 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
     @Transactional(rollbackFor = Exception.class)
     public Boolean modifyPrice(CollectionModifyPriceRequest request) {
         // 幂等校验
-        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+        CollectionStream existStream = collectionStreamMapper
                 .selectByIdentifier(request.getIdentifier(), request.getEventType().name(), request.getCollectionId());
         if (existStream != null) {
             return true;
@@ -150,7 +159,7 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
     @CacheInvalidate(name = ":collection:cache:id:", key = "#args[0].collectionId")
     public Boolean remove(CollectionRemoveRequest request) {
         // 幂等校验
-        CollectionInventoryStream existStream = collectionInventoryStreamMapper
+        CollectionStream existStream = collectionStreamMapper
                 .selectByIdentifier(request.getIdentifier(), request.getEventType().name(), request.getCollectionId());
         if (existStream != null) {
             return true;
@@ -168,6 +177,53 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
         Assert.isTrue(saveResult, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
 
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public CollectionAirdropResponse airDrop(CollectionAirDropRequest request, Collection collection) {
+        CollectionAirdropResponse response = new CollectionAirdropResponse();
+
+        // 幂等校验
+        CollectionAirdropStream existStream = collectionAirdropStreamMapper.selectByIdentifier(request.getIdentifier(), request.getEventType().name(), collection.getId(), request.getRecipientUserId());
+        if (existStream != null) {
+            response.setSuccess(true);
+            response.setResponseCode(DUPLICATED.name());
+            response.setAirDropStreamId(existStream.getId());
+
+            return response;
+        }
+
+        // 插入流水
+        CollectionInventoryStream stream = new CollectionInventoryStream(collection, request.getIdentifier(), request.getEventType(), request.getQuantity());
+        int saveResult = collectionInventoryStreamMapper.insert(stream);
+        Assert.isTrue(saveResult == 1, () -> new CollectionException(COLLECTION_STREAM_SAVE_FAILED));
+
+        // 插入空投流水
+        CollectionAirdropStream airdropStream = new CollectionAirdropStream(collection, request.getIdentifier(), request.getEventType(), request.getQuantity(), request.getRecipientUserId());
+        saveResult = collectionAirdropStreamMapper.insert(airdropStream);
+        Assert.isTrue(saveResult == 1, () -> new CollectionException(COLLECTION_AIRDROP_STREAM_UPDATE_FAILED));
+
+        // 批量创建藏品
+        List<HeldCollectionCreateRequest> heldCollectionCreateRequests = new ArrayList<>();
+        for (int i = 1; i <= request.getQuantity(); i++) {
+            // 构造请求
+            HeldCollectionCreateRequest createRequest = getHeldCollectionCreateRequest(request, collection, airdropStream);
+
+            heldCollectionCreateRequests.add(createRequest);
+        }
+        List<HeldCollection> heldCollections = heldCollectionService.batchCreate(heldCollectionCreateRequests);
+
+        // 扣减藏品库存
+        int updateResult = collectionMapper.airDrop(request.getCollectionId(), request.getQuantity());
+        Assert.isTrue(updateResult == 1, () -> new CollectionException(COLLECTION_UPDATE_FAILED));
+
+        response.setSuccess(true);
+        response.setResponseCode(SUCCESS.name());
+        response.setAirDropStreamId(airdropStream.getId());
+        response.setHeldCollections(HeldCollectionConvertor.INSTANCE.mapToVo(heldCollections));
+
+        return response;
     }
 
     @Override
@@ -225,5 +281,20 @@ public abstract class CollectionServiceImpl extends ServiceImpl<CollectionMapper
         Assert.isTrue(result == 1, () -> new CollectionException(COLLECTION_SAVE_FAILED));
 
         return true;
+    }
+
+    public HeldCollectionCreateRequest getHeldCollectionCreateRequest(CollectionAirDropRequest airDropRequest, Collection collection, CollectionAirdropStream airdropStream) {
+        HeldCollectionCreateRequest request = new HeldCollectionCreateRequest();
+        request.setGoodsId(airDropRequest.getCollectionId());
+        request.setUserId(airDropRequest.getRecipientUserId());
+        request.setName(collection.getName());
+        request.setCover(collection.getCover());
+        request.setPurchasePrice(collection.getPrice());
+        request.setBizType(airDropRequest.getBizType().name());
+        request.setBizNo(airdropStream.getId().toString());
+        request.setSerialNoBaseId(String.valueOf(collection.getId()));
+        request.setGoodsType(GoodsType.COLLECTION.name());
+
+        return request;
     }
 }

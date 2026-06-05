@@ -1,5 +1,6 @@
 package com.beaker.mintcraft.api.inventory.request;
 
+import com.beaker.mintcraft.api.collection.request.admin.CollectionAirDropRequest;
 import com.beaker.mintcraft.api.goods.constant.GoodsType;
 import com.beaker.mintcraft.api.order.request.OrderCreateRequest;
 import com.beaker.mintcraft.api.order.valobj.TradeOrderVO;
@@ -53,5 +54,12 @@ public class InventoryRequest extends BaseRequest {
         this.setInventory(tradeOrderVO.getItemCount());
         this.setIdentifier(tradeOrderVO.getOrderId());
         this.setGoodsType(tradeOrderVO.getGoodsType());
+    }
+
+    public InventoryRequest(CollectionAirDropRequest request) {
+        this.goodsId = request.getCollectionId().toString();
+        this.goodsType = GoodsType.COLLECTION;
+        this.identifier = request.getIdentifier();
+        this.inventory = request.getQuantity();
     }
 }

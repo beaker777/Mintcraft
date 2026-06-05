@@ -2,11 +2,13 @@ package com.beaker.mintcraft.api.collection.request.held;
 
 import com.beaker.mintcraft.api.collection.constant.CollectionRarity;
 import com.beaker.mintcraft.api.collection.constant.HeldCollectionEventType;
+import com.beaker.mintcraft.api.collection.request.admin.CollectionAirDropRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 /**
  * @Author beaker

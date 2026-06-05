@@ -1,6 +1,7 @@
 package com.beaker.mintcraft.api.user.response.data;
 
 import com.beaker.mintcraft.api.user.constant.UserRole;
+import com.beaker.mintcraft.api.user.constant.UserState;
 import com.github.houbb.sensitive.annotation.strategy.SensitiveStrategyPhone;
 import lombok.Data;
 
@@ -58,4 +59,22 @@ public class UserInfo extends BasicUserInfo implements Serializable {
      */
     private Date createTime;
 
+    public boolean userCanBuy() {
+        // 判断用户角色
+        if (this.getUserRole() != null && !this.getUserRole().equals(UserRole.CUSTOMER)) {
+            return false;
+        }
+
+        // 判断买家状态
+        if (this.getState() != null && !this.getState().equals(UserState.ACTIVE.name())) {
+            return false;
+        }
+
+        // 判断买家实名认证
+        if (this.getState() != null && !this.getCertification()) {
+            return false;
+        }
+
+        return true;
+    }
 }
